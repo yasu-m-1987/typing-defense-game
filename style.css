@@ -344,18 +344,35 @@ body {
 }
 
 /* タイピングインターフェース */
+/* タイピングインターフェース (HUD風・ゲーム画面上部に絶対配置) */
 #typing-input-overlay {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 20px;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 480px;
+  background: rgba(10, 10, 18, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 255, 234, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 16px;
+  z-index: 70; /* タイトル画面(80)のすぐ下に配置 */
+}
+
+/* タイトル画面(スタート/プレイ前オーバーレイ)表示中はタイピングパネルを完全に隠す */
+#game-start-overlay:not(.hidden) ~ #typing-input-overlay,
+#game-play-start-overlay:not(.hidden) ~ #typing-input-overlay {
+  display: none !important;
 }
 
 .typing-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 4px;
   position: relative;
 }
 
@@ -641,5 +658,33 @@ body {
     opacity: 0;
     transform: translateY(-20px);
     display: none;
+  }
+}
+
+/* 必殺技HUDボタンのエネルギーパルスアニメーション */
+.special-btn-hud {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 1px;
+}
+.special-btn-hud:not(.disabled) {
+  background: rgba(255, 170, 0, 0.25) !important;
+  border-color: #ffaa00 !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.6) !important;
+  animation: neon-pulse-sp 0.8s infinite alternate !important;
+}
+.special-btn-hud.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes neon-pulse-sp {
+  from {
+    box-shadow: 0 0 4px rgba(255, 170, 0, 0.4);
+    background: rgba(255, 170, 0, 0.1);
+  }
+  to {
+    box-shadow: 0 0 16px rgba(255, 170, 0, 0.8), 0 0 25px rgba(255, 85, 0, 0.4);
+    background: rgba(255, 170, 0, 0.35);
   }
 }

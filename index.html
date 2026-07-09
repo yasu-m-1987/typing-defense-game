@@ -41,6 +41,50 @@
       <div id="game-canvas-mount" style="position: relative;">
         <div id="phaser-game-instance"></div>
         
+        <!-- HUD風タイピングインターフェースオーバーレイ (ゲーム画面上部配置) -->
+        <div id="typing-input-overlay">
+          <div class="typing-container">
+            
+            <!-- タイピング指示ワード表示 -->
+            <div class="word-display-box" style="padding: 6px 12px; border: none; background: transparent; box-shadow: none; margin-bottom: 2px;">
+              <div class="next-monster-badge" id="summon-badge" style="top: -15px; font-size: 8px;">NEXT: キモバナナネコ</div>
+              <div class="word-display" id="word-target" style="font-size: 26px; margin-top: 4px; margin-bottom: 2px;">
+                <span class="japanese-word">クリックして開始</span>
+              </div>
+              <div class="word-roman" id="word-roman" style="font-size: 13px;">
+                <span class="untyped">click-here-to-start</span>
+              </div>
+            </div>
+
+            <input type="text" id="game-word-input" autocomplete="off" autofocus />
+
+            <!-- コンボ & 必殺技ゲージ (超見やすいネオンエネルギーゲージ) -->
+            <div class="typing-stats-hud" style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
+              <!-- エネルギーバー本体 -->
+              <div class="sp-hud-row" style="display: flex; align-items: center; gap: 10px;">
+                <span class="hud-label" style="font-size: 9px; color: #8a8a9d; font-weight: 800; letter-spacing: 1px; min-width: 60px;">ULTIMATE</span>
+                <div class="sp-bar-container-hud" style="flex: 1; height: 14px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 170, 0, 0.3); border-radius: 20px; overflow: hidden; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);">
+                  <div id="sp-bar-fill" class="sp-bar-fill-hud" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff5500, #ffaa00); transition: width 0.15s ease-out; box-shadow: 0 0 10px rgba(255, 170, 0, 0.6);"></div>
+                  <span id="sp-val" class="sp-text-hud" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; font-size: 9px; font-weight: 800; color: #fff; line-height: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">0%</span>
+                </div>
+                <button id="special-btn" class="special-btn-hud disabled" disabled style="height: 22px; font-size: 8px; font-weight: bold; padding: 0 10px; border-radius: 4px; border: 1px solid rgba(255, 85, 0, 0.4); background: rgba(255, 85, 0, 0.1); color: #ffaa00; cursor: pointer; transition: all 0.2s ease;">READY (SPACE)</button>
+              </div>
+
+              <!-- コンボ数とガイドの小行 -->
+              <div class="stats-hud-sub" style="display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
+                <div class="combo-hud" style="display: flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 9px; color: #8a8a9d; font-weight: bold;">COMBO:</span>
+                  <span id="combo-val" style="font-size: 11px; color: var(--neon-cyan); font-weight: 800; text-shadow: 0 0 8px var(--neon-cyan-glow);">0</span>
+                </div>
+                <div class="typing-guide-hud" style="font-size: 8px; color: #5a5a6d; letter-spacing: 0.5px;">
+                  ※【半角英数 (IME OFF)】入力専用
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        
         <!-- ゲーム内状態（ゲームオーバー・クリア・ウェーブ等）のオーバーレイ -->
         <div id="game-ui-overlay" class="hidden">
           <div class="overlay-content">
@@ -267,46 +311,7 @@
       </aside>
     </div>
 
-    <!-- タイピングインターフェースオーバーレイ -->
-    <div id="typing-input-overlay">
-      <div class="typing-container">
-        
-        <!-- タイピング指示ワード表示 -->
-        <div class="word-display-box">
-          <div class="next-monster-badge" id="summon-badge">NEXT: キモバナナネコ</div>
-          <div class="word-display" id="word-target">
-            <span class="japanese-word">クリックして開始</span>
-          </div>
-          <div class="word-roman" id="word-roman">
-            <span class="untyped">click-here-to-start</span>
-          </div>
-        </div>
 
-        <input type="text" id="game-word-input" autocomplete="off" autofocus placeholder="ここをクリックしてタイピングを開始してください" />
-        
-        <!-- タイピングガイドメッセージ -->
-        <div class="typing-guide-msg" style="font-size: 11px; color: #8a8a9d; margin-top: -6px; margin-bottom: 6px; letter-spacing: 1px;">
-          ※キーボードを【半角英数 (IME OFF)】にして入力してください
-        </div>
-
-        <!-- コンボ & SP 情報 -->
-        <div class="typing-stats">
-          <div class="combo-box">
-            <span class="stat-lbl">COMBO</span>
-            <span id="combo-val" class="stat-num text-pulse">0</span>
-          </div>
-          <div class="sp-box">
-            <span class="stat-lbl">SPECIAL GAUGE</span>
-            <div class="sp-bar-container">
-              <div id="sp-bar-fill" class="sp-bar-fill"></div>
-              <span id="sp-val" class="sp-text">0%</span>
-            </div>
-            <button id="special-btn" class="special-btn disabled" disabled>ULTIMATE (SPACE)</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
 
   </div>
 
