@@ -48,10 +48,10 @@
             <!-- タイピング指示ワード表示 -->
             <div class="word-display-box" style="padding: 6px 12px; border: none; background: transparent; box-shadow: none; margin-bottom: 2px;">
               <div class="next-monster-badge" id="summon-badge" style="top: -15px; font-size: 8px;">NEXT: キモバナナネコ</div>
-              <div class="word-display" id="word-target" style="font-size: 26px; margin-top: 4px; margin-bottom: 2px;">
+              <div class="word-display" id="word-target">
                 <span class="japanese-word">クリックして開始</span>
               </div>
-              <div class="word-roman" id="word-roman" style="font-size: 13px;">
+              <div class="word-roman" id="word-roman">
                 <span class="untyped">click-here-to-start</span>
               </div>
             </div>
@@ -87,10 +87,14 @@
         
         <!-- ゲーム内状態（ゲームオーバー・クリア・ウェーブ等）のオーバーレイ -->
         <div id="game-ui-overlay" class="hidden">
-          <div class="overlay-content">
-            <h2 id="overlay-title">GAME OVER</h2>
-            <p id="overlay-message">ベース基地が破壊されました。</p>
-            <button id="restart-btn" class="neon-btn">RETRY</button>
+          <div class="overlay-content" style="width: 320px; text-align: center; background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 255, 234, 0.3); box-shadow: 0 0 25px rgba(0, 255, 234, 0.25); padding: 25px; border-radius: 12px;">
+            <h2 id="overlay-title" style="font-size: 24px; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px;">GAME OVER</h2>
+            <p id="overlay-message" style="color: #8a8a9d; font-size: 11px; margin-bottom: 25px; line-height: 1.5; white-space: pre-wrap;">ベース基地が破壊されました。</p>
+            <div class="ui-overlay-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 220px; margin: 0 auto;">
+              <button id="restart-btn" class="neon-btn-green" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">RETRY</button>
+              <button id="ui-stage-select-btn" class="neon-btn-purple" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">STAGE SELECT</button>
+              <button id="ui-title-btn" class="neon-btn-blue" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">BACK TO TITLE</button>
+            </div>
           </div>
         </div>
 

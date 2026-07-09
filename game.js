@@ -369,6 +369,8 @@ const DOM = {
   overlayTitle: document.getElementById('overlay-title'),
   overlayMsg: document.getElementById('overlay-message'),
   restartBtn: document.getElementById('restart-btn'),
+  uiStageSelectBtn: document.getElementById('ui-stage-select-btn'),
+  uiTitleBtn: document.getElementById('ui-title-btn'),
   debugDisableEnemies: document.getElementById('debug-disable-enemies'),
   typingInputOverlay: document.getElementById('typing-input-overlay'),
   
@@ -2087,12 +2089,40 @@ DOM.deleteBtn.addEventListener('click', () => {
   deleteGameStateLocal();
 });
 
-// リスタートボタン
+// リスタート（リトライ）ボタン
 DOM.restartBtn.addEventListener('click', () => {
   const scene = phaserGame.scene.keys.MainGameScene;
   if (scene) {
     scene.resetGameScene();
+    
+    // プレイ前スタートオーバーレイを再表示して、「START GAME」を促す
+    const stage = GAME_STATE.activeStage || 'japan';
+    let stageName = '未来編・日本 (渋谷 - Easy)';
+    if (stage === 'dubai') stageName = '未来編・ドバイ (Normal)';
+    if (stage === 'moon') stageName = '未来編・月 (The Moon - Hard)';
+    
+    DOM.playStartStageName.innerText = stageName;
+    DOM.gamePlayStartOverlay.classList.remove('hidden');
   }
+});
+
+// ステージ選択ボタン
+DOM.uiStageSelectBtn.addEventListener('click', () => {
+  DOM.gameOverlay.classList.add('hidden');
+  DOM.startOverlay.classList.remove('hidden');
+  
+  selectedSlotForSetup = GAME_STATE.currentSlot || '1';
+  isNewGameSetup = false; // 戻るボタン押下時はロード選択に戻す
+  
+  updateTitleSlotButtons();
+  showTitleMenuPanel('title-menu-stage-select');
+});
+
+// タイトルに戻るボタン
+DOM.uiTitleBtn.addEventListener('click', () => {
+  DOM.gameOverlay.classList.add('hidden');
+  DOM.startOverlay.classList.remove('hidden');
+  showTitleMenuPanel('title-menu-main');
 });
 
 // 必殺技ボタンクリック

@@ -406,27 +406,29 @@ body {
 }
 
 .word-display {
-  font-family: 'Space Grotesk', monospace;
-  font-size: 32px;
-  font-weight: 700;
+  font-family: 'Outfit', 'Space Grotesk', sans-serif;
+  font-size: 34px;
+  font-weight: 800;
   letter-spacing: 2px;
-  margin-top: 8px;
-  margin-bottom: 4px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 20px rgba(0, 255, 234, 0.2);
 }
 
 .word-display .char-typed,
 .word-roman .char-typed {
   color: var(--neon-cyan);
   text-shadow: 0 0 12px var(--neon-cyan-glow);
-  font-weight: 700;
+  font-weight: 800;
   transition: all 0.1s ease;
 }
 
 .word-display .char-current,
 .word-roman .char-current {
-  color: #fff;
-  border-bottom: 2px solid var(--neon-cyan);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  color: #00ffea;
+  border-bottom: 2px solid #00ffea;
+  text-shadow: 0 0 10px #00ffea;
   font-weight: 800;
   padding-bottom: 1px;
   animation: pulse 0.8s infinite;
@@ -434,12 +436,13 @@ body {
 
 .word-display .char-untyped,
 .word-roman .char-untyped {
-  color: #4a4a5a;
+  color: #8c8ca3; /* コントラストを明るめのグレーへ強化 */
 }
 
 .word-roman {
-  font-size: 16px;
-  letter-spacing: 2px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
 }
 
 /* テキスト入力ボックス (非表示、またはフォーカス用) */
