@@ -645,82 +645,269 @@ class MainGameScene extends Phaser.Scene {
     this.enemyHPText = this.add.text(w - 60, y - 120, '', { font: 'bold 12px Outfit', fill: '#ff007c' }).setOrigin(0.5);
   }
 
-  // === サイバーホログラム城（味方）の描画 ===
+  // === リアルな石造りの中世ヨーロッパ城（味方）の描画 ===
   drawPlayerCastle(graphics, color) {
     graphics.clear();
     
-    graphics.lineStyle(3, color, 1);
-    graphics.fillStyle(color, 0.15);
-    
-    // 1. 中央のホログラムコア・シリンダー
-    graphics.fillRect(-16, -60, 32, 140);
-    graphics.strokeRect(-16, -60, 32, 140);
-    
-    // 2. 左右を支える二本の太いサイバーピラー
-    graphics.fillStyle(color, 0.2);
-    graphics.fillRect(-36, -30, 16, 110);
-    graphics.strokeRect(-36, -30, 16, 110);
-    graphics.fillRect(20, -30, 16, 110);
-    graphics.strokeRect(20, -30, 16, 110);
-    
-    // 3. ピラーの上のホログラム浮遊アンテナ（ひし形）
-    graphics.fillStyle(color, 0.5);
-    const diamondY = -45;
-    graphics.fillTriangle(-28, diamondY, -20, diamondY - 15, -36, diamondY - 15);
-    graphics.fillTriangle(-28, diamondY, -20, diamondY - 15, -28, diamondY - 30);
-    graphics.strokeTriangle(-28, diamondY, -20, diamondY - 15, -36, diamondY - 15);
-    graphics.strokeTriangle(-28, diamondY, -20, diamondY - 15, -28, diamondY - 30);
+    const stoneColor = 0xa4a4ac;      // 石壁のベースグレー
+    const darkStoneColor = 0x6e6e76;  // 陰影用ダークグレー
+    const lightStoneColor = 0xdadade; // ハイライト用ライトグレー
+    const roofColor = 0xdc3545;       // 塔の屋根（赤）
+    const darkRoofColor = 0x9d202f;   // 屋根の影
+    const gateWoodColor = 0x7c4924;   // 木製ゲートの茶色
+    const metalColor = 0x2d2d30;      // 金属補強の黒
 
-    graphics.fillTriangle(28, diamondY, 36, diamondY - 15, 20, diamondY - 15);
-    graphics.fillTriangle(28, diamondY, 36, diamondY - 15, 28, diamondY - 30);
-    graphics.strokeTriangle(28, diamondY, 36, diamondY - 15, 20, diamondY - 15);
-    graphics.strokeTriangle(28, diamondY, 36, diamondY - 15, 28, diamondY - 30);
+    // === 1. 左右のサブタワー ===
+    const drawSubTower = (x) => {
+      // 影（左側）
+      graphics.fillStyle(darkStoneColor, 1.0);
+      graphics.fillRect(x - 14, -40, 14, 120);
+      // 本体（右側）
+      graphics.fillStyle(stoneColor, 1.0);
+      graphics.fillRect(x, -40, 14, 120);
 
-    // 4. 中央コアのネオン球体と浮遊リング
-    graphics.fillStyle(color, 0.85);
-    graphics.fillCircle(0, -10, 12);
-    
-    graphics.lineStyle(1.5, color, 0.8);
-    graphics.strokeEllipse(0, -10, 24, 8);
-    graphics.strokeEllipse(0, -10, 32, 10);
-    
-    // 5. ゲート（ゲート口）
-    graphics.fillStyle(0x000000, 0.9);
-    graphics.fillRect(-10, 40, 20, 40);
-    graphics.strokeRect(-10, 40, 20, 40);
+      // 石レンガの水平スリット（薄い線）
+      graphics.lineStyle(1, 0x5a5a60, 0.4);
+      for (let y = -30; y < 80; y += 15) {
+        graphics.lineBetween(x - 14, y, x + 14, y);
+      }
+
+      // 塔 of the beam (eaves)
+      graphics.fillStyle(darkStoneColor, 1.0);
+      graphics.fillRect(x - 17, -46, 34, 6);
+      graphics.fillStyle(lightStoneColor, 1.0);
+      graphics.fillRect(x - 17, -46, 17, 2);
+
+      // 円錐形の尖塔（とんがり屋根）
+      graphics.fillStyle(darkRoofColor, 1.0);
+      graphics.beginPath();
+      graphics.moveTo(x - 17, -46);
+      graphics.lineTo(x, -85);
+      graphics.lineTo(x, -46);
+      graphics.closePath();
+      graphics.fillPath();
+
+      graphics.fillStyle(roofColor, 1.0);
+      graphics.beginPath();
+      graphics.moveTo(x, -46);
+      graphics.lineTo(x, -85);
+      graphics.lineTo(x + 17, -46);
+      graphics.closePath();
+      graphics.fillPath();
+
+      // 小窓
+      graphics.fillStyle(0x111116, 0.95);
+      graphics.fillRect(x - 4, -10, 8, 16);
+      graphics.fillStyle(0xffd54f, 0.85);
+      graphics.fillRect(x - 2, -8, 4, 10);
+    };
+
+    drawSubTower(-42);
+    drawSubTower(42);
+
+    // === 2. 中央の巨大な主塔 (Keep) ===
+    graphics.fillStyle(darkStoneColor, 1.0);
+    graphics.fillRect(-26, -70, 26, 150);
+    graphics.fillStyle(stoneColor, 1.0);
+    graphics.fillRect(0, -70, 26, 150);
+
+    graphics.lineStyle(1, 0x5a5a60, 0.4);
+    for (let y = -60; y < 80; y += 18) {
+      graphics.lineBetween(-26, y, 26, y);
+    }
+    const brickLines = [
+      {x: -12, y: -50}, {x: 10, y: -40}, {x: -8, y: -20}, {x: 15, y: -10},
+      {x: -15, y: 10}, {x: 5, y: 20}, {x: -6, y: 40}, {x: 12, y: 50}
+    ];
+    graphics.lineStyle(1, 0x5a5a60, 0.35);
+    brickLines.forEach(bl => {
+      graphics.lineBetween(bl.x, bl.y, bl.x, bl.y + 10);
+    });
+
+    graphics.fillStyle(darkStoneColor, 1.0);
+    graphics.fillRect(-30, -78, 60, 8);
+    graphics.fillStyle(lightStoneColor, 1.0);
+    graphics.fillRect(-30, -78, 30, 2);
+
+    graphics.fillStyle(stoneColor, 1.0);
+    graphics.fillRect(-28, -90, 10, 12);
+    graphics.fillRect(-10, -90, 8, 12);
+    graphics.fillRect(2, -90, 8, 12);
+    graphics.fillRect(18, -90, 10, 12);
+    graphics.fillStyle(darkStoneColor, 1.0);
+    graphics.fillRect(-28, -90, 5, 12);
+    graphics.fillRect(-10, -90, 4, 12);
+    graphics.fillRect(2, -90, 4, 12);
+    graphics.fillRect(18, -90, 5, 12);
+
+    // === 3. アーチ城門 (Gate) ===
+    graphics.fillStyle(darkStoneColor, 1.0);
+    graphics.fillRect(-16, 30, 32, 50);
+    graphics.fillStyle(0x1c1c1f, 1.0);
+    graphics.beginPath();
+    graphics.moveTo(-12, 80);
+    graphics.lineTo(-12, 44);
+    for (let theta = 180; theta >= 0; theta -= 15) {
+      const rad = theta * Math.PI / 180;
+      graphics.lineTo(Math.cos(rad) * 12, 44 - Math.sin(rad) * 12);
+    }
+    graphics.lineTo(12, 80);
+    graphics.closePath();
+    graphics.fillPath();
+
+    graphics.fillStyle(gateWoodColor, 1.0);
+    graphics.fillRect(-10, 44, 10, 36);
+    graphics.fillStyle(0x5f3618, 1.0);
+    graphics.fillRect(0, 44, 10, 36);
+
+    graphics.lineStyle(1.5, metalColor, 0.95);
+    graphics.lineBetween(-10, 54, 10, 54);
+    graphics.lineBetween(-10, 68, 10, 68);
+    graphics.fillStyle(0x8a8a92, 1.0);
+    graphics.fillCircle(-6, 54, 1.2);
+    graphics.fillCircle(6, 54, 1.2);
+    graphics.fillCircle(-6, 68, 1.2);
+    graphics.fillCircle(6, 68, 1.2);
+
+    // === 4. 中心の高窓 ===
+    graphics.fillStyle(0x1a1a24, 0.95);
+    graphics.fillRect(-5, -34, 10, 20);
+    graphics.fillStyle(0xffe066, 0.9);
+    graphics.fillRect(-3, -32, 6, 14);
+
+    // === 5. 天辺の旗 (Flag) ===
+    graphics.lineStyle(2, 0xd0d0d8, 1.0);
+    graphics.lineBetween(0, -90, 0, -120);
+    graphics.fillStyle(0x00c3ff, 0.9);
+    graphics.beginPath();
+    graphics.moveTo(0, -120);
+    graphics.lineTo(24, -112);
+    graphics.lineTo(0, -104);
+    graphics.closePath();
+    graphics.fillPath();
+    graphics.fillStyle(0x008cb7, 0.95);
+    graphics.beginPath();
+    graphics.moveTo(0, -112);
+    graphics.lineTo(24, -112);
+    graphics.lineTo(0, -104);
+    graphics.closePath();
+    graphics.fillPath();
   }
 
-  // === サイバーホログラム城（敵）の描画 ===
+  // === リアルな魔王の黒鉄城（敵）の描画 ===
   drawEnemyCastle(graphics, color) {
     graphics.clear();
+
+    const obsidianColor = 0x1d1a25;    // 黒曜石・鉄壁
+    const darkObsidianColor = 0x100e16;// 陰
+    const magmaColor = 0xff255c;       // マグマ
+    const energyPurple = 0x9d31ff;     // 魔法コアの紫
+
+    // === 1. 左右の尖った石柱 (Pillars) ===
+    const drawSpikePillar = (x, height) => {
+      graphics.fillStyle(darkObsidianColor, 1.0);
+      graphics.beginPath();
+      graphics.moveTo(x - 14, 80);
+      graphics.lineTo(x, 80 - height);
+      graphics.lineTo(x, 80);
+      graphics.closePath();
+      graphics.fillPath();
+
+      graphics.fillStyle(obsidianColor, 1.0);
+      graphics.beginPath();
+      graphics.moveTo(x, 80);
+      graphics.lineTo(x, 80 - height);
+      graphics.lineTo(x + 14, 80);
+      graphics.closePath();
+      graphics.fillPath();
+
+      graphics.lineStyle(1.5, magmaColor, 0.85);
+      graphics.lineBetween(x, 80 - height + 10, x, 80 - 5);
+      graphics.lineStyle(1.0, 0xff99b7, 0.45);
+      graphics.lineBetween(x, 80 - height + 15, x, 80 - 15);
+    };
+
+    drawSpikePillar(-40, 110);
+    drawSpikePillar(40, 110);
+
+    // === 2. 中央の怪しいオベリスク尖塔 (Dark Keep) ===
+    graphics.fillStyle(darkObsidianColor, 1.0);
+    graphics.beginPath();
+    graphics.moveTo(-25, 80);
+    graphics.lineTo(0, -75);
+    graphics.lineTo(0, 80);
+    graphics.closePath();
+    graphics.fillPath();
+
+    graphics.fillStyle(obsidianColor, 1.0);
+    graphics.beginPath();
+    graphics.moveTo(0, 80);
+    graphics.lineTo(0, -75);
+    graphics.lineTo(25, 80);
+    graphics.closePath();
+    graphics.fillPath();
+
+    const drawSideFin = (y, dir) => {
+      graphics.fillStyle(dir > 0 ? obsidianColor : darkObsidianColor, 1.0);
+      graphics.beginPath();
+      graphics.moveTo(dir * 12, y);
+      graphics.lineTo(dir * 28, y - 8);
+      graphics.lineTo(dir * 16, y + 10);
+      graphics.closePath();
+      graphics.fillPath();
+
+      graphics.lineStyle(1, magmaColor, 0.8);
+      graphics.lineBetween(dir * 12, y, dir * 28, y - 8);
+    };
+    drawSideFin(-10, -1);
+    drawSideFin(-10, 1);
+    drawSideFin(20, -1);
+    drawSideFin(20, 1);
+
+    // === 3. オベリスクの最上部に浮遊する魔石コア ===
+    graphics.fillStyle(energyPurple, 0.95);
+    graphics.beginPath();
+    graphics.moveTo(0, -114);
+    graphics.lineTo(10, -96);
+    graphics.lineTo(0, -78);
+    graphics.lineTo(-10, -96);
+    graphics.closePath();
+    graphics.fillPath();
+
+    graphics.fillStyle(0x5615a6, 0.95);
+    graphics.beginPath();
+    graphics.moveTo(0, -114);
+    graphics.lineTo(0, -78);
+    graphics.lineTo(-10, -96);
+    graphics.closePath();
+    graphics.fillPath();
+
+    graphics.lineStyle(1.5, magmaColor, 0.7);
+    graphics.strokeEllipse(0, -96, 24, 7);
+
+    graphics.lineStyle(1.0, 0xffffff, 0.65);
+    graphics.lineBetween(0, -78, 0, -74);
+
+    // === 4. 不気味な魔界の出入り口 (Abyss Gate) ===
+    graphics.fillStyle(darkObsidianColor, 1.0);
+    graphics.fillRect(-12, 38, 24, 42);
     
-    graphics.lineStyle(3, color, 1);
-    graphics.fillStyle(color, 0.15);
-    
-    // 1. 中央の鋭いサイバーオベリスク
-    graphics.fillTriangle(-20, 80, 20, 80, 0, -85);
-    graphics.strokeTriangle(-20, 80, 20, 80, 0, -85);
-    
-    // 2. 左右に浮かぶデジタルシールドプレート
-    graphics.fillStyle(color, 0.25);
-    graphics.fillRect(-45, -20, 12, 80);
-    graphics.strokeRect(-45, -20, 12, 80);
-    graphics.fillRect(33, -20, 12, 80);
-    graphics.strokeRect(33, -20, 12, 80);
-    
-    // 3. オベリスクの天辺に浮遊する怪しく光る四角形コア
-    graphics.fillStyle(color, 0.85);
-    graphics.fillRect(-8, -100, 16, 16);
-    graphics.strokeRect(-8, -100, 16, 16);
-    
-    // コアを取り囲むネオンリング
-    graphics.lineStyle(1.5, color, 0.8);
-    graphics.strokeEllipse(0, -92, 22, 6);
-    
-    // 4. 出入り口
-    graphics.fillStyle(0x000000, 0.9);
-    graphics.fillRect(-8, 45, 16, 35);
-    graphics.strokeRect(-8, 45, 16, 35);
+    graphics.fillStyle(0x0a0410, 1.0);
+    graphics.beginPath();
+    graphics.moveTo(-9, 80);
+    graphics.lineTo(-9, 48);
+    for (let theta = 180; theta >= 0; theta -= 30) {
+      const rad = theta * Math.PI / 180;
+      graphics.lineTo(Math.cos(rad) * 9, 48 - Math.sin(rad) * 9);
+    }
+    graphics.lineTo(9, 80);
+    graphics.closePath();
+    graphics.fillPath();
+
+    graphics.fillStyle(magmaColor, 0.75);
+    graphics.fillCircle(0, 48, 2);
+    graphics.lineStyle(1, magmaColor, 0.6);
+    graphics.strokeEllipse(0, 48, 7, 2);
   }
 
   updateBaseHealthStats() {
