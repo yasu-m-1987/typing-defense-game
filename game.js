@@ -17,12 +17,20 @@ const KANA_TO_ROMAN = {
   'だ': ['da'], 'ぢ': ['di', 'ji'], 'づ': ['du', 'zu'], 'で': ['de'], 'ど': ['do'],
   'ば': ['ba'], 'び': ['bi'], 'ぶ': ['bu'], 'べ': ['be'], 'ぼ': ['bo'],
   'ぱ': ['pa'], 'ぴ': ['pi'], 'ぷ': ['pu'], 'ぺ': ['pe'], 'ぽ': ['po'],
-  'ー': ['-']
+  'ー': ['-'],
+  'ぁ': ['la', 'xa'], 'ぃ': ['li', 'xi', 'yi'], 'ぅ': ['lu', 'xu'], 'ぇ': ['le', 'xe'], 'ぉ': ['lo', 'xo'],
+  'ゃ': ['lya', 'xya'], 'ゅ': ['lyu', 'xyu'], 'ょ': ['lyo', 'xyo'], 'っ': ['ltu', 'xtu']
 };
 
 const DOUBLE_KANA = {
   'きゃ': ['kya'], 'きゅ': ['kyu'], 'きょ': ['kyo'],
   'しゃ': ['sya', 'sha'], 'しゅ': ['syu', 'shu'], 'しょ': ['syo', 'sho'],
+  'てぃ': ['tyi', 'texi', 'teli', 'ti'], 'でぃ': ['dyi', 'dexi', 'deli', 'di'],
+  'てゅ': ['tyu', 'texu', 'telu'], 'でゅ': ['dyu', 'dexu', 'delu'],
+  'ちぇ': ['tye', 'che', 'cye'], 'じぇ': ['zye', 'je', 'jye'], 'しぇ': ['sye', 'she'],
+  'つぁ': ['tsa'], 'つぃ': ['tsi'], 'つぇ': ['tse'], 'つぉ': ['tso'],
+  'ふぁ': ['fa', 'fua'], 'ふぃ': ['fi', 'fui'], 'ふぇ': ['fe', 'fue'], 'ふぉ': ['fo', 'fuo'],
+  'ゔぁ': ['va'], 'ゔぃ': ['vi'], 'ゔ': ['vu'], 'ゔぇ': ['ve'], 'ゔぉ': ['vo'],
   'ちゃ': ['tya', 'cha'], 'ちゅ': ['tyu', 'chu'], 'ちょ': ['tyo', 'cho'],
   'にゃ': ['nya'], 'にゅ': ['nyu'], 'にょ': ['nyo'],
   'ひゃ': ['hya'], 'ひゅ': ['hyu'], 'ひょ': ['hyo'],
@@ -364,7 +372,17 @@ const DOM = {
   debugDisableEnemies: document.getElementById('debug-disable-enemies'),
   
   startOverlay: document.getElementById('game-start-overlay'),
-  startGameBtn: document.getElementById('start-game-btn'),
+  menuNewGame: document.getElementById('menu-new-game'),
+  menuLoadGame: document.getElementById('menu-load-game'),
+  menuOptions: document.getElementById('menu-options'),
+  
+  titleMenuMain: document.getElementById('title-menu-main'),
+  titleMenuNewSlots: document.getElementById('title-menu-new-slots'),
+  titleMenuLoadSlots: document.getElementById('title-menu-load-slots'),
+  titleMenuOptions: document.getElementById('title-menu-options'),
+  
+  optionStage: document.getElementById('option-stage'),
+  optionDisableEnemies: document.getElementById('option-disable-enemies'),
   
   selectSaveSlot: document.getElementById('select-save-slot'),
   slotMetaInfo: document.getElementById('slot-meta-info'),
@@ -472,13 +490,12 @@ class MainGameScene extends Phaser.Scene {
     this.updateBaseHealthStats();
     updateUI();
     
-    // セーブデータをロード（シーンが完全に初期化された後に行う）
-    loadGameStateLocal(this);
+    // 起動時は自動ロードせず、タイトル画面を表示する
+    updateTitleSlotButtons();
+    updateSlotInfo();
 
     // ゲーム開始前は物理エンジンを一時停止
-    if (!GAME_STATE.isStarted) {
-      this.physics.pause();
-    }
+    this.physics.pause();
   }
 
   debugSetBaseLevel(lvl) {
@@ -2077,15 +2094,160 @@ DOM.specialBtn.addEventListener('click', () => {
   }
 });
 
-// スタートボタンクリック
-DOM.startGameBtn.addEventListener('click', () => {
-  GAME_STATE.isStarted = true;
-  DOM.startOverlay.classList.add('hidden');
+// === タイトル画面メニュー遷移制御 ===
+function showTitleMenuPanel(panelId) {
+  const panels = [DOM.titleMenuMain, DOM.titleMenuNewSlots, DOM.titleMenuLoadSlots, DOM.titleMenuOptions];
+  panels.forEach(panel => {
+    if (panel.id === panelId) {
+      panel.classList.remove('hidden');
+    } else {
+      panel.classList.add('hidden');
+    }
+  });
+}
+
+function updateTitleSlotButtons() {
+  for (let slot = 1; slot <= 3; slot++) {
+    const metaKey = `typing_defense_save_slot_${slot}_meta`;
+    const metaStr = localStorage.getItem(metaKey);
+    let labelText = `スロット ${slot} (空スロット)`;
+    let hasData = false;
+    if (metaStr) {
+      try {
+        const meta = JSON.parse(metaStr);
+        labelText = `スロット ${slot} (Lv.${meta.level} - ${meta.gold}G)`;
+        hasData = true;
+      } catch (e) {
+        console.error(`Failed to parse metadata for slot ${slot}:`, e);
+      }
+    }
+    
+    // NEW GAME用のスロットボタン
+    const newBtns = document.querySelectorAll(`.new-slot-btn[data-slot="${slot}"]`);
+    newBtns.forEach(btn => {
+      btn.innerText = labelText;
+    });
+    
+    // LOAD GAME用のスロットボタン
+    const loadBtns = document.querySelectorAll(`.load-slot-btn[data-slot="${slot}"]`);
+    loadBtns.forEach(btn => {
+      btn.innerText = labelText;
+      if (!hasData) {
+        btn.classList.add('disabled');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('disabled');
+        btn.disabled = false;
+      }
+    });
+  }
+}
+
+// ニューゲーム開始
+function startNewGameInSlot(slot) {
+  GAME_STATE.currentSlot = slot.toString();
   
+  GAME_STATE.baseLevel = 1;
+  GAME_STATE.gold = 200;
+  GAME_STATE.mana = 0;
+  GAME_STATE.monsterLevels = {
+    banana_cat: 1,
+    keyboard_turtle: 1,
+    typist_dragon: 1,
+    nanobanana_bot: 1
+  };
+  GAME_STATE.activeWeapon = 'none';
+  GAME_STATE.activeArmor = 'none';
+  GAME_STATE.activeStage = DOM.optionStage.value || 'japan';
+
+  DOM.selectWeapon.value = GAME_STATE.activeWeapon;
+  DOM.selectArmor.value = GAME_STATE.activeArmor;
+  DOM.selectStage.value = GAME_STATE.activeStage;
+
+  updateEquipmentDropdowns();
+  saveGameStateLocal();
+
   const scene = phaserGame.scene.keys.MainGameScene;
   if (scene) {
+    scene.resetGameScene();
     scene.physics.resume();
-    DOM.wordInput.focus();
+  }
+
+  GAME_STATE.isStarted = true;
+  DOM.startOverlay.classList.add('hidden');
+  DOM.wordInput.focus();
+}
+
+// ロードゲーム開始
+function startLoadGameInSlot(slot) {
+  GAME_STATE.currentSlot = slot.toString();
+  
+  const scene = phaserGame.scene.keys.MainGameScene;
+  loadGameStateLocal(scene);
+  
+  if (scene) {
+    scene.physics.resume();
+  }
+
+  GAME_STATE.isStarted = true;
+  DOM.startOverlay.classList.add('hidden');
+  DOM.wordInput.focus();
+}
+
+// タイトルメニューイベントリスナー
+DOM.menuNewGame.addEventListener('click', () => {
+  updateTitleSlotButtons();
+  showTitleMenuPanel('title-menu-new-slots');
+});
+
+DOM.menuLoadGame.addEventListener('click', () => {
+  updateTitleSlotButtons();
+  showTitleMenuPanel('title-menu-load-slots');
+});
+
+DOM.menuOptions.addEventListener('click', () => {
+  showTitleMenuPanel('title-menu-options');
+});
+
+// 「戻る」ボタン群のバインド
+document.querySelectorAll('.back-to-main-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    showTitleMenuPanel('title-menu-main');
+  });
+});
+
+// NEW GAME スロット選択時のバインド
+document.querySelectorAll('.new-slot-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const slot = e.target.getAttribute('data-slot');
+    const metaKey = `typing_defense_save_slot_${slot}_meta`;
+    if (localStorage.getItem(metaKey)) {
+      if (!confirm(`スロット ${slot} には既存のデータが存在します。\n上書きして新しくゲームを開始してもよろしいですか？`)) {
+        return;
+      }
+    }
+    startNewGameInSlot(slot);
+  });
+});
+
+// LOAD GAME スロット選択時のバインド
+document.querySelectorAll('.load-slot-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const slot = e.target.getAttribute('data-slot');
+    startLoadGameInSlot(slot);
+  });
+});
+
+// オプション設定同期
+DOM.optionStage.addEventListener('change', (e) => {
+  DOM.selectStage.value = e.target.value;
+  GAME_STATE.activeStage = e.target.value;
+});
+
+DOM.optionDisableEnemies.addEventListener('change', (e) => {
+  GAME_STATE.disableEnemies = e.target.checked;
+  if (DOM.debugDisableEnemies) {
+    DOM.debugDisableEnemies.checked = e.target.checked;
   }
 });
 
@@ -2115,6 +2277,8 @@ const config = {
 
 const phaserGame = new Phaser.Game(config);
 window.phaserGame = phaserGame;
+window.GAME_STATE = GAME_STATE;
+window.generateRomanPatterns = generateRomanPatterns;
 
 updateUI();
 updateSlotInfo();

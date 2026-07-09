@@ -50,13 +50,66 @@
           </div>
         </div>
 
-        <!-- ゲームスタートオーバーレイ -->
-        <div id="game-start-overlay">
-          <div class="overlay-content">
-            <h2 class="start-logo"><span class="logo-accent">TYPING</span> COLOSSEUM</h2>
-            <p id="start-message" style="margin-bottom: 25px; color: #8a8a9d; font-size: 14px;">キーボードを【半角英数】にして開始してください</p>
-            <button id="start-game-btn" class="neon-btn-green" style="font-size: 18px; padding: 12px 36px;">START GAME</button>
+        <!-- ゲームタイトル画面オーバーレイ -->
+        <div id="game-start-overlay" style="display: flex; align-items: center; justify-content: center;">
+          
+          <!-- 1. メインのタイトルメニュー -->
+          <div class="overlay-content" id="title-menu-main" style="width: 320px; transition: all 0.3s ease;">
+            <h1 class="start-logo" style="font-size: 32px; line-height: 1.25; margin-bottom: 15px; letter-spacing: 2px;"><span class="logo-accent">TYPING</span><br>COLOSSEUM</h1>
+            <p id="start-message" style="margin-bottom: 25px; color: #8a8a9d; font-size: 11px; letter-spacing: 0.5px; line-height: 1.4;">キーボードを【半角英数 (IME OFF)】にして<br>開始してください</p>
+            <div class="title-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 220px; margin: 0 auto;">
+              <button id="menu-new-game" class="neon-btn-green" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">NEW GAME</button>
+              <button id="menu-load-game" class="neon-btn-purple" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">LOAD GAME</button>
+              <button id="menu-options" class="neon-btn-blue" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">OPTIONS</button>
+            </div>
           </div>
+
+          <!-- 2. NEW GAME スロット選択パネル -->
+          <div class="overlay-content hidden" id="title-menu-new-slots" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green-glow); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">NEW GAME</h2>
+            <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">開始するスロットを選択してください。<br><span style="color: #ff3366;">※既存のデータは上書きされます</span></p>
+            <div class="slot-buttons" style="display: flex; flex-direction: column; gap: 8px; width: 240px; margin: 0 auto 18px;">
+              <button class="new-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1 (データ読み込み中...)</button>
+              <button class="new-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2 (データ読み込み中...)</button>
+              <button class="new-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3 (データ読み込み中...)</button>
+            </div>
+            <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
+
+          <!-- 3. LOAD GAME スロット選択パネル -->
+          <div class="overlay-content hidden" id="title-menu-load-slots" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple-glow); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">LOAD GAME</h2>
+            <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">ロードするスロットを選択してください。</p>
+            <div class="slot-buttons" style="display: flex; flex-direction: column; gap: 8px; width: 240px; margin: 0 auto 18px;">
+              <button class="load-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1 (データ読み込み中...)</button>
+              <button class="load-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2 (データ読み込み中...)</button>
+              <button class="load-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3 (データ読み込み中...)</button>
+            </div>
+            <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
+
+          <!-- 4. OPTIONS パネル -->
+          <div class="overlay-content hidden" id="title-menu-options" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 255, 234, 0.4); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">OPTIONS</h2>
+            
+            <div class="options-group" style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-bottom: 18px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+              <div>
+                <label style="font-size: 10px; color: #8a8a9d; display: block; margin-bottom: 4px; letter-spacing: 0.5px;">DEFAULT STAGE</label>
+                <select id="option-stage" class="custom-select" style="width: 100%; height: 32px; font-size: 11px; background: rgba(0,0,0,0.5);">
+                  <option value="japan">未来編・日本 (渋谷 - Easy)</option>
+                  <option value="dubai">未来編・ドバイ (Dubai - Normal)</option>
+                  <option value="moon">未来編・月 (The Moon - Hard)</option>
+                </select>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer;">
+                <input type="checkbox" id="option-disable-enemies" style="cursor: pointer; width: 14px; height: 14px;">
+                <label for="option-disable-enemies" style="font-size: 11px; color: #d1d1e0; cursor: pointer; user-select: none;">敵の出現を停止する (デバッグ用)</label>
+              </div>
+            </div>
+            
+            <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
+          
         </div>
       </div>
 
