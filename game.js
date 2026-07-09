@@ -370,6 +370,7 @@ const DOM = {
   overlayMsg: document.getElementById('overlay-message'),
   restartBtn: document.getElementById('restart-btn'),
   debugDisableEnemies: document.getElementById('debug-disable-enemies'),
+  typingInputOverlay: document.getElementById('typing-input-overlay'),
   
   startOverlay: document.getElementById('game-start-overlay'),
   menuNewGame: document.getElementById('menu-new-game'),
@@ -1295,6 +1296,7 @@ class MainGameScene extends Phaser.Scene {
     this.enemies.clear(true, true);
 
     DOM.gameOverlay.classList.remove('hidden');
+    DOM.typingInputOverlay.classList.add('hidden');
     
     if (isWin) {
       DOM.overlayTitle.innerText = 'VICTORY!';
@@ -1334,6 +1336,7 @@ class MainGameScene extends Phaser.Scene {
   resetGameScene() {
     this.isGameOver = false; // ゲームオーバーフラグをリセット
     DOM.gameOverlay.classList.add('hidden');
+    DOM.typingInputOverlay.classList.add('hidden');
     
     this.tweens.killAll(); // 残存Tweenを全停止
     this.allies.clear(true, true);
@@ -2290,6 +2293,7 @@ document.querySelectorAll('.stage-btn').forEach(btn => {
 DOM.realStartGameBtn.addEventListener('click', () => {
   DOM.gamePlayStartOverlay.classList.add('hidden');
   GAME_STATE.isStarted = true;
+  DOM.typingInputOverlay.classList.remove('hidden');
   
   const scene = phaserGame.scene.keys.MainGameScene;
   if (scene) {
