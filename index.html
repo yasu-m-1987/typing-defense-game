@@ -96,19 +96,19 @@
             <div class="equip-slot">
               <label for="select-weapon">WEAPON</label>
               <select id="select-weapon" class="custom-select">
-                <option value="none">無し</option>
-                <option value="claymore_keyboard">クレイモア・キーボード (+15% Dmg, +5% Crit)</option>
-                <option value="laser_stylus">レーザー・スタイラス (射程+12%)</option>
-                <option value="nanobanana_staff">ナノバナナスタッフ (SP獲得+25%)</option>
+                <option value="none">無し (初期)</option>
+                <option value="claymore_keyboard">クレイモア・キーボード (Lv.3) (+15% Dmg, +5% Crit)</option>
+                <option value="laser_stylus">レーザー・スタイラス (Lv.7) (射程+12%)</option>
+                <option value="nanobanana_staff">ナノバナナスタッフ (Lv.12) (SP獲得+25%)</option>
               </select>
             </div>
             <div class="equip-slot">
               <label for="select-armor">ARMOR</label>
               <select id="select-armor" class="custom-select">
-                <option value="none">無し</option>
-                <option value="aluminum_chassis">アルミニウム・シャーシ (基地HP+20%, 被Dmg-8%)</option>
-                <option value="buffer_shield">バッファー・シールド (ミス防止 3回)</option>
-                <option value="central_protector">セントラル・プロテクター (被Dmg-15%, ノックバック無効)</option>
+                <option value="none">無し (初期)</option>
+                <option value="aluminum_chassis">アルミニウム・シャーシ (Lv.5) (基地HP+20%, 被Dmg-8%)</option>
+                <option value="buffer_shield">バッファー・シールド (Lv.10) (ミス防止 3回)</option>
+                <option value="central_protector">セントラル・プロテクター (Lv.15) (被Dmg-15%, ノックバック無効)</option>
               </select>
             </div>
           </div>
@@ -170,10 +170,24 @@
           </div>
         </section>
         
-        <!-- セーブ/ロード -->
-        <section class="panel-section save-load-section">
-          <button id="save-btn" class="neon-btn-green">SAVE STATE</button>
-          <button id="load-btn" class="neon-btn-purple">LOAD STATE</button>
+        <!-- セーブ/ロード (3スロット) -->
+        <section class="panel-section save-load-section" style="padding: 12px 15px;">
+          <h3 style="margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8a8a9d;">Save Slots</h3>
+          <div class="slot-row" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+            <select id="select-save-slot" class="custom-select" style="width: 100%; font-size: 12px; height: 32px; background: rgba(0,0,0,0.4);">
+              <option value="1">スロット 1</option>
+              <option value="2">スロット 2</option>
+              <option value="3">スロット 3</option>
+            </select>
+            <div id="slot-meta-info" style="font-size: 11px; color: #00ffea; background: rgba(255,255,255,0.02); padding: 5px 8px; border-radius: 4px; border: 1px dashed rgba(255,255,255,0.1); min-height: 18px;">
+              データがありません
+            </div>
+          </div>
+          <div class="save-load-actions" style="display: flex; gap: 5px;">
+            <button id="save-btn" class="neon-btn-green" style="flex: 1; height: 30px; font-size: 11px; padding: 0;">SAVE</button>
+            <button id="load-btn" class="neon-btn-purple" style="flex: 1; height: 30px; font-size: 11px; padding: 0;">LOAD</button>
+            <button id="delete-btn" class="neon-btn" style="flex: 1; height: 30px; font-size: 11px; padding: 0; background: rgba(255,30,80,0.15); border-color: rgba(255,30,80,0.5); color: #ff3366; text-shadow: 0 0 5px rgba(255,30,80,0.4);">DELETE</button>
+          </div>
         </section>
 
       </aside>
@@ -221,6 +235,9 @@
     </div>
 
   </div>
+
+  <!-- レベルアップ時のアンロック通知用トーストコンテナ -->
+  <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
 
   <!-- メインゲームスクリプト -->
   <script type="module" src="./game.js"></script>

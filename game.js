@@ -110,7 +110,10 @@ const GAME_STATE = {
   ultimateTimer: 0,
 
   // ゲーム開始フラグ
-  isStarted: false
+  isStarted: false,
+
+  // 現在選択中のセーブスロット
+  currentSlot: '1'
 };
 
 // === 1.5. ステージ定義 (にゃんこ大戦争 未来編風) ===
@@ -165,6 +168,21 @@ const ARMORS = {
   aluminum_chassis: { name: 'アルミニウム・シャーシ', hpMul: 1.20, dmgRed: 0.08, shieldCharges: 0, knockbackImmune: false },
   buffer_shield: { name: 'バッファー・シールド', hpMul: 1.0, dmgRed: 0.0, shieldCharges: 3, knockbackImmune: false },
   central_protector: { name: 'セントラル・プロテクター', hpMul: 1.0, dmgRed: 0.15, shieldCharges: 0, knockbackImmune: true }
+};
+
+// 装備品のアンロック必要レベル定義
+const WEAPON_UNLOCK_LEVELS = {
+  none: 1,
+  claymore_keyboard: 3,
+  laser_stylus: 7,
+  nanobanana_staff: 12
+};
+
+const ARMOR_UNLOCK_LEVELS = {
+  none: 1,
+  aluminum_chassis: 5,
+  buffer_shield: 10,
+  central_protector: 15
 };
 
 // === 全角英数を半角に変換するヘパー ===
@@ -341,7 +359,11 @@ const DOM = {
   debugDisableEnemies: document.getElementById('debug-disable-enemies'),
   
   startOverlay: document.getElementById('game-start-overlay'),
-  startGameBtn: document.getElementById('start-game-btn')
+  startGameBtn: document.getElementById('start-game-btn'),
+  
+  selectSaveSlot: document.getElementById('select-save-slot'),
+  slotMetaInfo: document.getElementById('slot-meta-info'),
+  deleteBtn: document.getElementById('delete-btn')
 };
 
 // UI更新用ヘルパー
@@ -454,10 +476,16 @@ class MainGameScene extends Phaser.Scene {
     }
   }
 
+  debugSetBaseLevel(lvl) {
+    const prev = GAME_STATE.baseLevel;
+    GAME_STATE.baseLevel = lvl;
+    checkEquipmentUnlocks(prev, lvl);
+    updateEquipmentDropdowns();
+    updateUI();
+  }
+
   // === にゃんこ大戦争未来編風サイバー背景描画 ===
   createBackground(w, h) {
-    const stage = STAGES[GAME_STATE.activeStage] || STAGES.japan;
-
     if (this.bgGraphics) {
       this.bgGraphics.destroy();
     }
@@ -465,79 +493,126 @@ class MainGameScene extends Phaser.Scene {
     this.bgGraphics = this.add.graphics();
     this.groundY = h - 60;
 
-    const gridColor = stage.gridColor;
-    const neonColor = stage.bgTheme === '#030b1e' ? 0x00ffea : stage.bgTheme === '#020e1b' ? 0x00bcff : 0xbd00ff;
-
-    // 1. 宇宙の星空（パーティクル）の描画
-    this.bgGraphics.fillStyle(0xffffff, 0.45);
-    for (let i = 0; i < 40; i++) {
-      const starX = (Math.sin(i * 1234.56) * 0.5 + 0.5) * w;
-      const starY = (Math.cos(i * 9876.54) * 0.5 + 0.5) * (this.groundY - 100);
-      const size = (i % 3 === 0) ? 2 : 1;
-      this.bgGraphics.fillRect(starX, starY, size, size);
+    // 1. 空のグラデーション (昼の青空)
+    for (let y = 0; y < this.groundY; y++) {
+      const ratio = y / this.groundY;
+      const r = Math.round(0x7a * (1 - ratio) + 0xd6 * ratio);
+      const g = Math.round(0xe5 * (1 - ratio) + 0xf7 * ratio);
+      const b = Math.round(0xff * (1 - ratio) + 0xff * ratio);
+      const color = (r << 16) + (g << 8) + b;
+      this.bgGraphics.fillStyle(color, 1.0);
+      this.bgGraphics.fillRect(0, y, w, 1);
     }
 
-    // 2. 空に浮かぶ巨大なホログラム地球（未来編の象徴）
-    this.bgGraphics.lineStyle(1.5, neonColor, 0.15);
-    const globeX = w / 2;
-    const globeY = 90;
-    const globeRadius = 60;
-    this.bgGraphics.strokeCircle(globeX, globeY, globeRadius);
-    // 経度・緯度グリッド線
-    for (let i = 1; i <= 3; i++) {
-      this.bgGraphics.strokeEllipse(globeX, globeY, globeRadius * (i * 0.3), globeRadius);
-      this.bgGraphics.strokeEllipse(globeX, globeY, globeRadius, globeRadius * (i * 0.3));
+    // 2. 太陽
+    this.bgGraphics.fillStyle(0xfff7d1, 1.0);
+    this.bgGraphics.fillCircle(w - 120, 70, 25);
+    this.bgGraphics.fillStyle(0xfff7d1, 0.25);
+    this.bgGraphics.fillCircle(w - 120, 70, 38);
+
+    // 3. 遠くの山々 (Mountains)
+    // 遠くの淡い山
+    this.bgGraphics.fillStyle(0x4c946e, 0.95);
+    this.bgGraphics.beginPath();
+    this.bgGraphics.moveTo(0, this.groundY);
+    this.bgGraphics.lineTo(0, this.groundY - 70);
+    this.bgGraphics.lineTo(120, this.groundY - 110);
+    this.bgGraphics.lineTo(260, this.groundY - 60);
+    this.bgGraphics.lineTo(390, this.groundY - 125);
+    this.bgGraphics.lineTo(540, this.groundY - 80);
+    this.bgGraphics.lineTo(680, this.groundY - 130);
+    this.bgGraphics.lineTo(w, this.groundY - 90);
+    this.bgGraphics.lineTo(w, this.groundY);
+    this.bgGraphics.closePath();
+    this.bgGraphics.fillPath();
+
+    // 手前の少し濃い山
+    this.bgGraphics.fillStyle(0x327852, 1.0);
+    this.bgGraphics.beginPath();
+    this.bgGraphics.moveTo(0, this.groundY);
+    this.bgGraphics.lineTo(0, this.groundY - 40);
+    this.bgGraphics.lineTo(80, this.groundY - 80);
+    this.bgGraphics.lineTo(200, this.groundY - 50);
+    this.bgGraphics.lineTo(320, this.groundY - 95);
+    this.bgGraphics.lineTo(470, this.groundY - 50);
+    this.bgGraphics.lineTo(600, this.groundY - 100);
+    this.bgGraphics.lineTo(720, this.groundY - 60);
+    this.bgGraphics.lineTo(w, this.groundY - 75);
+    this.bgGraphics.lineTo(w, this.groundY);
+    this.bgGraphics.closePath();
+    this.bgGraphics.fillPath();
+
+    // 4. 白いふわふわの雲 (Clouds)
+    this.bgGraphics.fillStyle(0xffffff, 0.75);
+    const drawCloud = (x, y, scale) => {
+      this.bgGraphics.fillCircle(x, y, 16 * scale);
+      this.bgGraphics.fillCircle(x + 18 * scale, y - 6 * scale, 22 * scale);
+      this.bgGraphics.fillCircle(x + 36 * scale, y + 2 * scale, 16 * scale);
+      this.bgGraphics.fillEllipse(x + 18 * scale, y + 8 * scale, 34 * scale, 12 * scale);
+    };
+    drawCloud(100, 80, 1.1);
+    drawCloud(340, 60, 0.85);
+    drawCloud(620, 95, 1.25);
+
+    // 5. 地面（草原）
+    this.bgGraphics.fillStyle(0x52b33b, 1.0);
+    this.bgGraphics.fillRect(0, this.groundY, w, h - this.groundY);
+
+    // 草原のディテールグラデーション
+    for (let y = this.groundY; y < h; y++) {
+      const ratio = (y - this.groundY) / (h - this.groundY);
+      const r = Math.round(0x52 * (1 - ratio) + 0x3a * ratio);
+      const g = Math.round(0xb3 * (1 - ratio) + 0x8c * ratio);
+      const b = Math.round(0x3b * (1 - ratio) + 0x27 * ratio);
+      const color = (r << 16) + (g << 8) + b;
+      this.bgGraphics.fillStyle(color, 0.8);
+      this.bgGraphics.fillRect(0, y, w, 1);
     }
 
-    // 3. 遠景の近未来都市ビル群のシルエットとネオン
-    this.bgGraphics.fillStyle(0x010714, 0.85); // ビルの影
-    this.bgGraphics.lineStyle(1.5, gridColor, 0.6); // ネオン境界
-    
-    const buildingData = [
-      { x: 30, w: 45, h: 140 }, { x: 90, w: 40, h: 180 }, { x: 140, w: 55, h: 100 },
-      { x: 210, w: 45, h: 155 }, { x: 270, w: 70, h: 125 }, { x: 360, w: 50, h: 210 },
-      { x: 420, w: 55, h: 135 }, { x: 500, w: 40, h: 165 }, { x: 550, w: 75, h: 110 },
-      { x: 650, w: 50, h: 195 }, { x: 710, w: 45, h: 150 }
-    ];
-    
-    buildingData.forEach(b => {
-      const by = this.groundY - b.h;
-      this.bgGraphics.fillRect(b.x, by, b.w, b.h);
-      this.bgGraphics.strokeRect(b.x, by, b.w, b.h);
-      
-      // ビル内のネオン窓
-      this.bgGraphics.fillStyle(neonColor, 0.3);
-      for (let wx = b.x + 8; wx < b.x + b.w - 8; wx += 12) {
-        for (let wy = by + 12; wy < by + b.h - 12; wy += 20) {
-          if ((wx + wy) % 3 === 0) {
-            this.bgGraphics.fillRect(wx, wy, 4, 6);
-          }
-        }
+    // 草原を横切るのどかな小道 (lineToでカーブをシミュレート)
+    this.bgGraphics.fillStyle(0xe5c494, 0.9); // 土色
+    this.bgGraphics.beginPath();
+    this.bgGraphics.moveTo(0, this.groundY + 15);
+    this.bgGraphics.lineTo(250, this.groundY + 15);
+    this.bgGraphics.lineTo(400, this.groundY + 30);
+    this.bgGraphics.lineTo(550, h - 30);
+    this.bgGraphics.lineTo(w, h);
+    this.bgGraphics.lineTo(w - 70, h);
+    this.bgGraphics.lineTo(500, h - 30);
+    this.bgGraphics.lineTo(370, this.groundY + 28);
+    this.bgGraphics.lineTo(0, this.groundY + 28);
+    this.bgGraphics.closePath();
+    this.bgGraphics.fillPath();
+
+    // 草のディテール描画 (V字)
+    this.bgGraphics.lineStyle(1.5, 0x317c22, 0.7);
+    for (let i = 0; i < 70; i++) {
+      const gx = (Math.sin(i * 3546.78) * 0.5 + 0.5) * w;
+      const gy = this.groundY + 5 + (Math.cos(i * 1245.89) * 0.5 + 0.5) * (h - this.groundY - 15);
+      this.bgGraphics.lineBetween(gx, gy, gx - 3, gy - 6);
+      this.bgGraphics.lineBetween(gx, gy, gx + 2, gy - 7);
+    }
+
+    // お花
+    const flowerColors = [0xff5b7f, 0xffde59, 0xffffff, 0x38b6ff];
+    for (let i = 0; i < 45; i++) {
+      const fx = (Math.cos(i * 8745.21) * 0.5 + 0.5) * w;
+      const fy = this.groundY + 8 + (Math.sin(i * 9642.12) * 0.5 + 0.5) * (h - this.groundY - 18);
+      const color = flowerColors[i % flowerColors.length];
+      this.bgGraphics.fillStyle(color, 1.0);
+      this.bgGraphics.fillCircle(fx, fy, 2.2);
+      if (color !== 0xffde59) {
+        this.bgGraphics.fillStyle(0xffde59, 1.0);
+        this.bgGraphics.fillCircle(fx, fy, 0.8);
       }
-      this.bgGraphics.fillStyle(0x010714, 0.85); // リセット
-    });
-
-    // 4. 地面のサイバーグリッドと3Dパースライン
-    this.bgGraphics.lineStyle(1.5, gridColor, 0.6);
-    const gridSize = 45;
-    // 水平グリッド線
-    for (let y = this.groundY; y < h; y += 15) {
-      this.bgGraphics.lineBetween(0, y, w, y);
-    }
-    // パース（奥行き）線
-    for (let x = -100; x < w + 100; x += gridSize) {
-      this.bgGraphics.lineBetween(x, this.groundY, x * 1.25 - 100, h);
     }
 
-    // 地面の境界ネオンライン
-    this.bgGraphics.lineStyle(3, neonColor, 0.85);
-    this.bgGraphics.lineBetween(0, this.groundY, w, this.groundY);
-    this.bgGraphics.lineStyle(6, neonColor, 0.25);
+    // 地面の境界シャドウライン
+    this.bgGraphics.lineStyle(2.5, 0x225c16, 0.85);
     this.bgGraphics.lineBetween(0, this.groundY, w, this.groundY);
 
-    // カメラ背景色を適用
-    const colorInt = Phaser.Display.Color.HexStringToColor(stage.bgTheme).color;
-    this.cameras.main.setBackgroundColor(colorInt);
+    // カメラ背景色
+    this.cameras.main.setBackgroundColor(0x7ae5ff);
   }
 
   createBases(w, h) {
@@ -1013,7 +1088,10 @@ class MainGameScene extends Phaser.Scene {
       
       GAME_STATE.gold += goldEarned;
       GAME_STATE.mana += manaEarned;
+      const prevLvl = GAME_STATE.baseLevel;
       GAME_STATE.baseLevel++;
+      checkEquipmentUnlocks(prevLvl, GAME_STATE.baseLevel);
+      updateEquipmentDropdowns();
       
       // 自動的に次のステージに進める
       if (GAME_STATE.activeStage === 'japan') {
@@ -1521,11 +1599,119 @@ class Fighter extends Phaser.GameObjects.Container {
 }
 
 // === 10. ローカルデータセーブ＆ロード処理 ===
-const LOCAL_STORAGE_KEY = 'typing_defense_save_state';
+// === 10. ローカルデータセーブ＆ロード処理 (3スロット対応) ===
+const LOCAL_STORAGE_KEY_PREFIX = 'typing_defense_save_state_slot_';
+const SLOT_META_KEY_PREFIX = 'typing_defense_save_slot_meta_';
+
+// 装備品ドロップダウンの活性・非活性をレベルに応じて制御
+function updateEquipmentDropdowns() {
+  const currentLevel = GAME_STATE.baseLevel;
+
+  // 武器ドロップダウン
+  if (DOM.selectWeapon) {
+    const options = DOM.selectWeapon.querySelectorAll('option');
+    options.forEach(opt => {
+      const required = WEAPON_UNLOCK_LEVELS[opt.value] || 1;
+      if (currentLevel >= required) {
+        opt.disabled = false;
+      } else {
+        opt.disabled = true;
+        if (GAME_STATE.activeWeapon === opt.value) {
+          GAME_STATE.activeWeapon = 'none';
+          DOM.selectWeapon.value = 'none';
+        }
+      }
+    });
+  }
+
+  // 防具ドロップダウン
+  if (DOM.selectArmor) {
+    const options = DOM.selectArmor.querySelectorAll('option');
+    options.forEach(opt => {
+      const required = ARMOR_UNLOCK_LEVELS[opt.value] || 1;
+      if (currentLevel >= required) {
+        opt.disabled = false;
+      } else {
+        opt.disabled = true;
+        if (GAME_STATE.activeArmor === opt.value) {
+          GAME_STATE.activeArmor = 'none';
+          DOM.selectArmor.value = 'none';
+        }
+      }
+    });
+  }
+}
+
+// 新規装備アンロック時のトースト通知表示
+function showToastNotification(title, message) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast-notification';
+  toast.innerHTML = `
+    <div style="font-weight: bold; font-size: 13px; color: #00ffea; margin-bottom: 3px;">${title}</div>
+    <div style="font-size: 11px; color: #d1d1e0;">${message}</div>
+  `;
+
+  container.appendChild(toast);
+
+  // 4秒後に自動削除
+  setTimeout(() => {
+    toast.remove();
+  }, 4000);
+}
+
+// レベルアップ時の新規アンロックチェック
+function checkEquipmentUnlocks(prevLevel, currentLevel) {
+  for (const [key, reqLvl] of Object.entries(WEAPON_UNLOCK_LEVELS)) {
+    if (prevLevel < reqLvl && currentLevel >= reqLvl) {
+      const name = WEAPONS[key].name;
+      showToastNotification('⚔️ 武器アンロック！', `「${name}」が入手可能になりました。(Lv.${reqLvl})`);
+    }
+  }
+
+  for (const [key, reqLvl] of Object.entries(ARMOR_UNLOCK_LEVELS)) {
+    if (prevLevel < reqLvl && currentLevel >= reqLvl) {
+      const name = ARMORS[key].name;
+      showToastNotification('🛡️ 防具アンロック！', `「${name}」が入手可能になりました。(Lv.${reqLvl})`);
+    }
+  }
+}
+
+// スロットメタデータ/UI表示の更新
+function updateSlotInfo() {
+  if (!DOM.selectSaveSlot || !DOM.slotMetaInfo) return;
+  
+  for (let i = 1; i <= 3; i++) {
+    const metaRaw = localStorage.getItem(`${SLOT_META_KEY_PREFIX}${i}`);
+    const option = DOM.selectSaveSlot.querySelector(`option[value="${i}"]`);
+    if (option) {
+      if (metaRaw) {
+        const meta = JSON.parse(metaRaw);
+        option.text = `スロット ${i} (Lv.${meta.level} - ${meta.gold}G)`;
+      } else {
+        option.text = `スロット ${i} (データなし)`;
+      }
+    }
+  }
+
+  const currentSlot = GAME_STATE.currentSlot;
+  const metaRaw = localStorage.getItem(`${SLOT_META_KEY_PREFIX}${currentSlot}`);
+  if (metaRaw) {
+    const meta = JSON.parse(metaRaw);
+    DOM.slotMetaInfo.style.color = '#00ffea';
+    DOM.slotMetaInfo.innerText = `Lv.${meta.level} / Gold: ${meta.gold}G (${meta.date})`;
+  } else {
+    DOM.slotMetaInfo.style.color = '#8a8a9d';
+    DOM.slotMetaInfo.innerText = 'データがありません (空きスロット)';
+  }
+}
 
 function saveGameStateLocal() {
+  const currentSlot = GAME_STATE.currentSlot;
   const data = {
-    user_id: 999, // ローカルユーザーID
+    user_id: 999,
     base_level: GAME_STATE.baseLevel,
     current_gold: GAME_STATE.gold,
     current_mana: GAME_STATE.mana,
@@ -1534,14 +1720,28 @@ function saveGameStateLocal() {
     equipped_armor: GAME_STATE.activeArmor,
     active_stage: GAME_STATE.activeStage
   };
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-  console.log('Saved state locally:', data);
+
+  localStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}${currentSlot}`, JSON.stringify(data));
+
+  const now = new Date();
+  const timestamp = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const meta = {
+    level: GAME_STATE.baseLevel,
+    gold: Math.floor(GAME_STATE.gold),
+    date: timestamp
+  };
+  localStorage.setItem(`${SLOT_META_KEY_PREFIX}${currentSlot}`, JSON.stringify(meta));
+
+  updateSlotInfo();
+  console.log(`Saved state locally to Slot ${currentSlot}:`, data);
+  showToastNotification('💾 セーブ完了', `スロット ${currentSlot} にデータを保存しました。`);
 }
 
 function loadGameStateLocal(sceneInstance) {
-  const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+  const currentSlot = GAME_STATE.currentSlot;
+  const raw = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}${currentSlot}`);
   if (!raw) {
-    console.warn('保存されたゲームデータが見つかりません。');
+    console.warn(`スロット ${currentSlot} に保存されたゲームデータが見つかりません。`);
     return;
   }
   try {
@@ -1557,20 +1757,39 @@ function loadGameStateLocal(sceneInstance) {
     };
     GAME_STATE.activeWeapon = data.equipped_weapon || 'none';
     GAME_STATE.activeArmor = data.equipped_armor || 'none';
-    GAME_STATE.activeStage = data.active_stage || 'japan'; // 未来編・日本
-    
+    GAME_STATE.activeStage = data.active_stage || 'japan';
+
     DOM.selectWeapon.value = GAME_STATE.activeWeapon;
     DOM.selectArmor.value = GAME_STATE.activeArmor;
     DOM.selectStage.value = GAME_STATE.activeStage;
-    
+
+    updateEquipmentDropdowns();
+
     if (sceneInstance) {
       sceneInstance.resetGameScene();
     }
-    
+
     updateUI();
-    console.log('ゲームデータをロードしました。');
+    updateSlotInfo();
+    console.log(`ゲームデータをロードしました (Slot ${currentSlot})`);
   } catch (err) {
     console.error('Error loading save state:', err);
+  }
+}
+
+function deleteGameStateLocal() {
+  const currentSlot = GAME_STATE.currentSlot;
+  const raw = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}${currentSlot}`);
+  if (!raw) {
+    showToastNotification('⚠️ 削除不可', `スロット ${currentSlot} にデータはありません。`);
+    return;
+  }
+
+  if (confirm(`スロット ${currentSlot} のセーブデータを本当に削除しますか？\n（この操作は取り消せません）`)) {
+    localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${currentSlot}`);
+    localStorage.removeItem(`${SLOT_META_KEY_PREFIX}${currentSlot}`);
+    updateSlotInfo();
+    showToastNotification('🗑️ データ削除', `スロット ${currentSlot} のデータを削除しました。`);
   }
 }
 
@@ -1620,7 +1839,13 @@ DOM.selectArmor.addEventListener('change', (e) => {
   }
 });
 
-// セーブ・ロードボタン
+// セーブスロット選択変更
+DOM.selectSaveSlot.addEventListener('change', (e) => {
+  GAME_STATE.currentSlot = e.target.value;
+  updateSlotInfo();
+});
+
+// セーブ・ロード・削除ボタン
 DOM.saveBtn.addEventListener('click', () => {
   saveGameStateLocal();
 });
@@ -1628,6 +1853,10 @@ DOM.saveBtn.addEventListener('click', () => {
 DOM.loadBtn.addEventListener('click', () => {
   const scene = phaserGame.scene.keys.MainGameScene;
   loadGameStateLocal(scene);
+});
+
+DOM.deleteBtn.addEventListener('click', () => {
+  deleteGameStateLocal();
 });
 
 // リスタートボタン
@@ -1683,5 +1912,8 @@ const config = {
 };
 
 const phaserGame = new Phaser.Game(config);
+window.phaserGame = phaserGame;
 
 updateUI();
+updateSlotInfo();
+updateEquipmentDropdowns();
