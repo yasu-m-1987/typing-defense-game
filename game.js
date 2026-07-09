@@ -35,6 +35,11 @@ const DOUBLE_KANA = {
 };
 
 function generateRomanPatterns(kana) {
+  // 特殊な入力揺れ・外国語スペル対応 ("わいふぁい")
+  if (kana === 'わいふぁい') {
+    return ['waifai', 'wifi', 'wi-fi', 'waifa-i', 'wi_fi'];
+  }
+
   let results = [''];
   let i = 0;
   while (i < kana.length) {
@@ -491,6 +496,7 @@ class MainGameScene extends Phaser.Scene {
     }
 
     this.bgGraphics = this.add.graphics();
+    this.bgGraphics.setDepth(-10);
     this.groundY = h - 60;
 
     // 1. 空のグラデーション (昼の青空)
@@ -620,6 +626,7 @@ class MainGameScene extends Phaser.Scene {
 
     // 味方基地（サイバー近未来城壁）
     this.playerBase = this.add.container(60, y);
+    this.playerBase.setDepth(1);
     this.playerBaseG = this.add.graphics();
     this.drawPlayerCastle(this.playerBaseG, 0x00ffea); // シアン
     this.playerBase.add(this.playerBaseG);
@@ -631,6 +638,7 @@ class MainGameScene extends Phaser.Scene {
 
     // 敵基地（サイバー近未来城壁）
     this.enemyBase = this.add.container(w - 60, y);
+    this.enemyBase.setDepth(1);
     this.enemyBaseG = this.add.graphics();
     this.drawEnemyCastle(this.enemyBaseG, 0xff007c); // ピンク
     this.enemyBase.add(this.enemyBaseG);
@@ -641,8 +649,8 @@ class MainGameScene extends Phaser.Scene {
     this.enemyBase.body.setOffset(-45, -100);
 
     // HPテキスト表示
-    this.playerHPText = this.add.text(60, y - 120, '', { font: 'bold 12px Outfit', fill: '#00ffea' }).setOrigin(0.5);
-    this.enemyHPText = this.add.text(w - 60, y - 120, '', { font: 'bold 12px Outfit', fill: '#ff007c' }).setOrigin(0.5);
+    this.playerHPText = this.add.text(60, y - 120, '', { font: 'bold 12px Outfit', fill: '#00ffea' }).setOrigin(0.5).setDepth(10);
+    this.enemyHPText = this.add.text(w - 60, y - 120, '', { font: 'bold 12px Outfit', fill: '#ff007c' }).setOrigin(0.5).setDepth(10);
   }
 
   // === リアルな石造りの中世ヨーロッパ城（味方）の描画 ===
@@ -1152,6 +1160,7 @@ class MainGameScene extends Phaser.Scene {
     const allyObj = new Fighter(this, spawnX, spawnY, config, true);
     this.allies.add(allyObj);
     this.add.existing(allyObj);
+    allyObj.initPhysics();
 
     if (mId === 'nanobanana_bot') {
       const buffMul = 1.0 + Math.min(0.3, (lvl - 1) * 0.01);
@@ -1205,6 +1214,7 @@ class MainGameScene extends Phaser.Scene {
     const enemyObj = new Fighter(this, spawnX, spawnY, config, false);
     this.enemies.add(enemyObj);
     this.add.existing(enemyObj);
+    enemyObj.initPhysics();
   }
 
   handleCombatOverlap(ally, enemy) {
@@ -1414,15 +1424,20 @@ class Fighter extends Phaser.GameObjects.Container {
     this.updateHpBar();
     this.add(this.hpBar);
 
-    // 物理エンジンへの登録
-    scene.physics.world.enable(this);
+    this.radius = config.radius || 12;
+    this.range = config.range || 15;
+    this.setDepth(5);
+  }
+
+  initPhysics() {
+    if (!this.body) return;
     this.body.setCollideWorldBounds(true);
     this.body.setGravityY(0);
     this.body.setVelocityX(this.speed);
     
     // 衝突判定サイズ調整
-    this.body.setSize(config.radius * 2, config.radius * 2);
-    this.body.setOffset(-config.radius, -config.radius);
+    this.body.setSize(this.radius * 2, this.radius * 2);
+    this.body.setOffset(-this.radius, -this.radius);
   }
 
   // === 高度な歩行・浮遊モーションの適用 (初期スケールに対する相対アニメーション) ===
