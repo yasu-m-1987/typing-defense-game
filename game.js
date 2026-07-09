@@ -380,6 +380,12 @@ const DOM = {
   titleMenuNewSlots: document.getElementById('title-menu-new-slots'),
   titleMenuLoadSlots: document.getElementById('title-menu-load-slots'),
   titleMenuOptions: document.getElementById('title-menu-options'),
+  titleMenuStageSelect: document.getElementById('title-menu-stage-select'),
+  backToSlotsBtn: document.getElementById('back-to-slots-btn'),
+  
+  gamePlayStartOverlay: document.getElementById('game-play-start-overlay'),
+  playStartStageName: document.getElementById('play-start-stage-name'),
+  realStartGameBtn: document.getElementById('real-start-game-btn'),
   
   optionStage: document.getElementById('option-stage'),
   optionDisableEnemies: document.getElementById('option-disable-enemies'),
@@ -2095,8 +2101,11 @@ DOM.specialBtn.addEventListener('click', () => {
 });
 
 // === タイトル画面メニュー遷移制御 ===
+let isNewGameSetup = false;
+let selectedSlotForSetup = '1';
+
 function showTitleMenuPanel(panelId) {
-  const panels = [DOM.titleMenuMain, DOM.titleMenuNewSlots, DOM.titleMenuLoadSlots, DOM.titleMenuOptions];
+  const panels = [DOM.titleMenuMain, DOM.titleMenuNewSlots, DOM.titleMenuLoadSlots, DOM.titleMenuOptions, DOM.titleMenuStageSelect];
   panels.forEach(panel => {
     if (panel.id === panelId) {
       panel.classList.remove('hidden');
@@ -2108,7 +2117,7 @@ function showTitleMenuPanel(panelId) {
 
 function updateTitleSlotButtons() {
   for (let slot = 1; slot <= 3; slot++) {
-    const metaKey = `typing_defense_save_slot_${slot}_meta`;
+    const metaKey = `${SLOT_META_KEY_PREFIX}${slot}`; // メタデータキーの不一致バグを解消！
     const metaStr = localStorage.getItem(metaKey);
     let labelText = `スロット ${slot} (空スロット)`;
     let hasData = false;
@@ -2143,8 +2152,8 @@ function updateTitleSlotButtons() {
   }
 }
 
-// ニューゲーム開始
-function startNewGameInSlot(slot) {
+// ニューゲーム設定
+function setupNewGame(slot, stage) {
   GAME_STATE.currentSlot = slot.toString();
   
   GAME_STATE.baseLevel = 1;
@@ -2158,7 +2167,7 @@ function startNewGameInSlot(slot) {
   };
   GAME_STATE.activeWeapon = 'none';
   GAME_STATE.activeArmor = 'none';
-  GAME_STATE.activeStage = DOM.optionStage.value || 'japan';
+  GAME_STATE.activeStage = stage;
 
   DOM.selectWeapon.value = GAME_STATE.activeWeapon;
   DOM.selectArmor.value = GAME_STATE.activeArmor;
@@ -2170,28 +2179,30 @@ function startNewGameInSlot(slot) {
   const scene = phaserGame.scene.keys.MainGameScene;
   if (scene) {
     scene.resetGameScene();
-    scene.physics.resume();
   }
 
-  GAME_STATE.isStarted = true;
-  DOM.startOverlay.classList.add('hidden');
-  DOM.wordInput.focus();
+  GAME_STATE.isStarted = false; // スタートボタンを押すまで開始しない
 }
 
-// ロードゲーム開始
-function startLoadGameInSlot(slot) {
+// ロードゲーム設定
+function setupLoadGame(slot, stage) {
   GAME_STATE.currentSlot = slot.toString();
   
   const scene = phaserGame.scene.keys.MainGameScene;
   loadGameStateLocal(scene);
   
-  if (scene) {
-    scene.physics.resume();
-  }
+  // ユーザーが選択した新しいステージを適用
+  GAME_STATE.activeStage = stage;
+  DOM.selectStage.value = stage;
 
-  GAME_STATE.isStarted = true;
-  DOM.startOverlay.classList.add('hidden');
-  DOM.wordInput.focus();
+  if (scene) {
+    scene.resetGameScene();
+  }
+  
+  // 自動的に最新のステージ設定をスロットに保存
+  saveGameStateLocal();
+
+  GAME_STATE.isStarted = false; // スタートボタンを押すまで開始しない
 }
 
 // タイトルメニューイベントリスナー
@@ -2220,13 +2231,15 @@ document.querySelectorAll('.back-to-main-btn').forEach(btn => {
 document.querySelectorAll('.new-slot-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {
     const slot = e.target.getAttribute('data-slot');
-    const metaKey = `typing_defense_save_slot_${slot}_meta`;
+    const metaKey = `${SLOT_META_KEY_PREFIX}${slot}`;
     if (localStorage.getItem(metaKey)) {
       if (!confirm(`スロット ${slot} には既存のデータが存在します。\n上書きして新しくゲームを開始してもよろしいですか？`)) {
         return;
       }
     }
-    startNewGameInSlot(slot);
+    isNewGameSetup = true;
+    selectedSlotForSetup = slot;
+    showTitleMenuPanel('title-menu-stage-select');
   });
 });
 
@@ -2234,8 +2247,55 @@ document.querySelectorAll('.new-slot-btn').forEach(btn => {
 document.querySelectorAll('.load-slot-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {
     const slot = e.target.getAttribute('data-slot');
-    startLoadGameInSlot(slot);
+    isNewGameSetup = false;
+    selectedSlotForSetup = slot;
+    showTitleMenuPanel('title-menu-stage-select');
   });
+});
+
+// ステージ選択内の「戻る」ボタンバインド
+DOM.backToSlotsBtn.addEventListener('click', () => {
+  if (isNewGameSetup) {
+    showTitleMenuPanel('title-menu-new-slots');
+  } else {
+    showTitleMenuPanel('title-menu-load-slots');
+  }
+});
+
+// ステージボタンバインド
+document.querySelectorAll('.stage-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const stage = e.target.getAttribute('data-stage');
+    
+    if (isNewGameSetup) {
+      setupNewGame(selectedSlotForSetup, stage);
+    } else {
+      setupLoadGame(selectedSlotForSetup, stage);
+    }
+    
+    // タイトルを非表示に
+    DOM.startOverlay.classList.add('hidden');
+    
+    // プレイ前スタートボタンオーバーレイを表示
+    let stageName = '未来編・日本 (渋谷 - Easy)';
+    if (stage === 'dubai') stageName = '未来編・ドバイ (Normal)';
+    if (stage === 'moon') stageName = '未来編・月 (The Moon - Hard)';
+    
+    DOM.playStartStageName.innerText = stageName;
+    DOM.gamePlayStartOverlay.classList.remove('hidden');
+  });
+});
+
+// ゲームプレイ開始スタートボタンのバインド
+DOM.realStartGameBtn.addEventListener('click', () => {
+  DOM.gamePlayStartOverlay.classList.add('hidden');
+  GAME_STATE.isStarted = true;
+  
+  const scene = phaserGame.scene.keys.MainGameScene;
+  if (scene) {
+    scene.physics.resume();
+  }
+  DOM.wordInput.focus();
 });
 
 // オプション設定同期

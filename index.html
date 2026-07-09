@@ -38,7 +38,7 @@
 
     <div class="main-layout">
       <!-- Phaserゲームマウント領域 -->
-      <div id="game-canvas-mount">
+      <div id="game-canvas-mount" style="position: relative;">
         <div id="phaser-game-instance"></div>
         
         <!-- ゲーム内状態（ゲームオーバー・クリア・ウェーブ等）のオーバーレイ -->
@@ -47,6 +47,15 @@
             <h2 id="overlay-title">GAME OVER</h2>
             <p id="overlay-message">ベース基地が破壊されました。</p>
             <button id="restart-btn" class="neon-btn">RETRY</button>
+          </div>
+        </div>
+
+        <!-- ゲームプレイ開始前のスタートボタンオーバーレイ -->
+        <div id="game-play-start-overlay" class="hidden" style="display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); z-index: 80;">
+          <div class="overlay-content" style="width: 280px; text-align: center; background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 255, 234, 0.3); box-shadow: 0 0 25px rgba(0, 255, 234, 0.25); padding: 25px; border-radius: 12px;">
+            <h2 id="play-start-stage-title" style="font-size: 15px; color: #8a8a9d; letter-spacing: 2px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">SELECTED STAGE</h2>
+            <p id="play-start-stage-name" style="color: #ffffff; font-size: 18px; margin-bottom: 20px; font-weight: bold; text-shadow: 0 0 8px rgba(255,255,255,0.3);">日本 (渋谷 - Easy)</p>
+            <button id="real-start-game-btn" class="neon-btn-green" style="font-size: 15px; padding: 11px 0; width: 100%; letter-spacing: 1.5px; font-weight: bold; box-shadow: 0 0 15px var(--neon-green-glow);">START GAME</button>
           </div>
         </div>
 
@@ -69,9 +78,9 @@
             <h2 style="font-size: 18px; color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green-glow); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">NEW GAME</h2>
             <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">開始するスロットを選択してください。<br><span style="color: #ff3366;">※既存のデータは上書きされます</span></p>
             <div class="slot-buttons" style="display: flex; flex-direction: column; gap: 8px; width: 240px; margin: 0 auto 18px;">
-              <button class="new-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1 (データ読み込み中...)</button>
-              <button class="new-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2 (データ読み込み中...)</button>
-              <button class="new-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3 (データ読み込み中...)</button>
+              <button class="new-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1</button>
+              <button class="new-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2</button>
+              <button class="new-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3</button>
             </div>
             <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
           </div>
@@ -81,9 +90,9 @@
             <h2 style="font-size: 18px; color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple-glow); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">LOAD GAME</h2>
             <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">ロードするスロットを選択してください。</p>
             <div class="slot-buttons" style="display: flex; flex-direction: column; gap: 8px; width: 240px; margin: 0 auto 18px;">
-              <button class="load-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1 (データ読み込み中...)</button>
-              <button class="load-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2 (データ読み込み中...)</button>
-              <button class="load-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3 (データ読み込み中...)</button>
+              <button class="load-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1</button>
+              <button class="load-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2</button>
+              <button class="load-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3</button>
             </div>
             <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
           </div>
@@ -109,6 +118,18 @@
             
             <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
           </div>
+
+          <!-- 5. STAGE SELECT パネル (スロット選択後に表示される) -->
+          <div class="overlay-content hidden" id="title-menu-stage-select" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 255, 234, 0.4); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">STAGE SELECT</h2>
+            <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">挑戦するステージを選択してください。</p>
+            <div class="stage-select-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 240px; margin: 0 auto 18px;">
+              <button class="stage-btn neon-btn-green" data-stage="japan" style="font-size: 12px; padding: 10px 0; width: 100%; font-weight: bold; letter-spacing: 0.5px;">未来編・日本 (渋谷 - Easy)</button>
+              <button class="stage-btn neon-btn-purple" data-stage="dubai" style="font-size: 12px; padding: 10px 0; width: 100%; font-weight: bold; letter-spacing: 0.5px;">未来編・ドバイ (Normal)</button>
+              <button class="stage-btn neon-btn-pink" data-stage="moon" style="font-size: 12px; padding: 10px 0; width: 100%; font-weight: bold; letter-spacing: 0.5px;">未来編・月 (The Moon - Hard)</button>
+            </div>
+            <button id="back-to-slots-btn" class="neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
           
         </div>
       </div>
@@ -117,7 +138,7 @@
       <aside class="control-panel">
         
         <!-- ステージ選択 -->
-        <section class="panel-section">
+        <section class="panel-section" style="display: none;">
           <h3 class="section-title">STAGE SELECT</h3>
           <div class="equip-grid">
             <div class="equip-slot">
@@ -132,7 +153,7 @@
         </section>
         
         <!-- デバッグ設定 -->
-        <section class="panel-section">
+        <section class="panel-section" style="display: none;">
           <h3 class="section-title">DEBUG OPTIONS</h3>
           <div class="equip-grid">
             <div class="equip-slot" style="flex-direction: row; align-items: center; gap: 8px; cursor: pointer;">
@@ -224,7 +245,7 @@
         </section>
         
         <!-- セーブ/ロード (3スロット) -->
-        <section class="panel-section save-load-section" style="padding: 12px 15px;">
+        <section class="panel-section save-load-section" style="padding: 12px 15px; display: none;">
           <h3 style="margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8a8a9d;">Save Slots</h3>
           <div class="slot-row" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
             <select id="select-save-slot" class="custom-select" style="width: 100%; font-size: 12px; height: 32px; background: rgba(0,0,0,0.4);">
