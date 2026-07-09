@@ -373,6 +373,8 @@ const DOM = {
   uiTitleBtn: document.getElementById('ui-title-btn'),
   debugDisableEnemies: document.getElementById('debug-disable-enemies'),
   typingInputOverlay: document.getElementById('typing-input-overlay'),
+  gameHeader: document.querySelector('.game-header'),
+  controlPanel: document.querySelector('.control-panel'),
   
   startOverlay: document.getElementById('game-start-overlay'),
   menuNewGame: document.getElementById('menu-new-game'),
@@ -2122,6 +2124,11 @@ DOM.uiStageSelectBtn.addEventListener('click', () => {
 DOM.uiTitleBtn.addEventListener('click', () => {
   DOM.gameOverlay.classList.add('hidden');
   DOM.startOverlay.classList.remove('hidden');
+  
+  // タイトルに戻るのでヘッダーとサイドバーを非表示に！
+  DOM.gameHeader.classList.add('hidden');
+  DOM.controlPanel.classList.add('hidden');
+  
   showTitleMenuPanel('title-menu-main');
 });
 
@@ -2209,6 +2216,10 @@ function setupNewGame(slot, stage) {
   updateEquipmentDropdowns();
   saveGameStateLocal();
 
+  // ロード完了したのでヘッダーとサイドバーを表示！
+  DOM.gameHeader.classList.remove('hidden');
+  DOM.controlPanel.classList.remove('hidden');
+
   const scene = phaserGame.scene.keys.MainGameScene;
   if (scene) {
     scene.resetGameScene();
@@ -2227,6 +2238,10 @@ function setupLoadGame(slot, stage) {
   // ユーザーが選択した新しいステージを適用
   GAME_STATE.activeStage = stage;
   DOM.selectStage.value = stage;
+
+  // ロード完了したのでヘッダーとサイドバーを表示！
+  DOM.gameHeader.classList.remove('hidden');
+  DOM.controlPanel.classList.remove('hidden');
 
   if (scene) {
     scene.resetGameScene();
