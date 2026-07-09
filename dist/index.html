@@ -10,14 +10,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
   <!-- Phaser 3 CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
-  <script type="module" crossorigin src="/assets/index-Cmviac3b.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CxiZY4Br.css">
+  <script type="module" crossorigin src="/assets/index-Dv8FlVsJ.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CrzPLOSM.css">
 </head>
 <body>
   <div id="game-environment-frame" class="wp-custom-game-container">
     
     <!-- プレミアムサイバーヘッダー -->
-    <header class="game-header">
+    <header class="game-header hidden">
       <div class="header-logo">
         <span class="logo-accent">TYPING</span> COLOSSEUM
       </div>
@@ -39,24 +39,155 @@
 
     <div class="main-layout">
       <!-- Phaserゲームマウント領域 -->
-      <div id="game-canvas-mount">
+      <div id="game-canvas-mount" style="position: relative;">
         <div id="phaser-game-instance"></div>
+        
+        <!-- HUD風タイピングインターフェースオーバーレイ (ゲーム画面上部配置) -->
+        <div id="typing-input-overlay" class="hidden">
+          <div class="typing-container">
+            
+            <!-- タイピング指示ワード表示 -->
+            <div class="word-display-box" style="padding: 6px 12px; border: none; background: transparent; box-shadow: none; margin-bottom: 2px;">
+              <div class="next-monster-badge" id="summon-badge" style="top: -15px; font-size: 8px;">NEXT: キモバナナネコ</div>
+              <div class="word-display" id="word-target">
+                <span class="japanese-word">クリックして開始</span>
+              </div>
+              <div class="word-roman" id="word-roman">
+                <span class="untyped">click-here-to-start</span>
+              </div>
+            </div>
+
+            <input type="text" id="game-word-input" autocomplete="off" autofocus />
+
+            <!-- コンボ & 必殺技ゲージ (超見やすいネオンエネルギーゲージ) -->
+            <div class="typing-stats-hud" style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
+              <!-- エネルギーバー本体 -->
+              <div class="sp-hud-row" style="display: flex; align-items: center; gap: 10px;">
+                <span class="hud-label" style="font-size: 9px; color: #8a8a9d; font-weight: 800; letter-spacing: 1px; min-width: 60px;">ULTIMATE</span>
+                <div class="sp-bar-container-hud" style="flex: 1; height: 14px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 170, 0, 0.3); border-radius: 20px; overflow: hidden; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);">
+                  <div id="sp-bar-fill" class="sp-bar-fill-hud" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff5500, #ffaa00); transition: width 0.15s ease-out; box-shadow: 0 0 10px rgba(255, 170, 0, 0.6);"></div>
+                  <span id="sp-val" class="sp-text-hud" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; font-size: 9px; font-weight: 800; color: #fff; line-height: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">0%</span>
+                </div>
+                <button id="special-btn" class="special-btn-hud disabled" disabled style="height: 22px; font-size: 8px; font-weight: bold; padding: 0 10px; border-radius: 4px; border: 1px solid rgba(255, 85, 0, 0.4); background: rgba(255, 85, 0, 0.1); color: #ffaa00; cursor: pointer; transition: all 0.2s ease;">READY (SPACE)</button>
+              </div>
+
+              <!-- コンボ数とガイドの小行 -->
+              <div class="stats-hud-sub" style="display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
+                <div class="combo-hud" style="display: flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 9px; color: #8a8a9d; font-weight: bold;">COMBO:</span>
+                  <span id="combo-val" style="font-size: 11px; color: var(--neon-cyan); font-weight: 800; text-shadow: 0 0 8px var(--neon-cyan-glow);">0</span>
+                </div>
+                <div class="typing-guide-hud" style="font-size: 8px; color: #5a5a6d; letter-spacing: 0.5px;">
+                  ※【半角英数 (IME OFF)】入力専用
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
         
         <!-- ゲーム内状態（ゲームオーバー・クリア・ウェーブ等）のオーバーレイ -->
         <div id="game-ui-overlay" class="hidden">
-          <div class="overlay-content">
-            <h2 id="overlay-title">GAME OVER</h2>
-            <p id="overlay-message">ベース基地が破壊されました。</p>
-            <button id="restart-btn" class="neon-btn">RETRY</button>
+          <div class="overlay-content" style="width: 320px; text-align: center; background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 255, 234, 0.3); box-shadow: 0 0 25px rgba(0, 255, 234, 0.25); padding: 25px; border-radius: 12px;">
+            <h2 id="overlay-title" style="font-size: 24px; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px;">GAME OVER</h2>
+            <p id="overlay-message" style="color: #8a8a9d; font-size: 11px; margin-bottom: 25px; line-height: 1.5; white-space: pre-wrap;">ベース基地が破壊されました。</p>
+            <div class="ui-overlay-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 220px; margin: 0 auto;">
+              <button id="restart-btn" class="neon-btn-green" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">RETRY</button>
+              <button id="ui-stage-select-btn" class="neon-btn-purple" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">STAGE SELECT</button>
+              <button id="ui-title-btn" class="neon-btn-blue" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">BACK TO TITLE</button>
+            </div>
           </div>
+        </div>
+
+        <!-- ゲームプレイ開始前のスタートボタンオーバーレイ -->
+        <div id="game-play-start-overlay" class="hidden" style="display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); z-index: 80;">
+          <div class="overlay-content" style="width: 280px; text-align: center; background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 255, 234, 0.3); box-shadow: 0 0 25px rgba(0, 255, 234, 0.25); padding: 25px; border-radius: 12px;">
+            <h2 id="play-start-stage-title" style="font-size: 15px; color: #8a8a9d; letter-spacing: 2px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">SELECTED STAGE</h2>
+            <p id="play-start-stage-name" style="color: #ffffff; font-size: 18px; margin-bottom: 20px; font-weight: bold; text-shadow: 0 0 8px rgba(255,255,255,0.3);">日本 (渋谷 - Easy)</p>
+            <button id="real-start-game-btn" class="neon-btn-green" style="font-size: 15px; padding: 11px 0; width: 100%; letter-spacing: 1.5px; font-weight: bold; box-shadow: 0 0 15px var(--neon-green-glow);">START GAME</button>
+          </div>
+        </div>
+
+        <!-- ゲームタイトル画面オーバーレイ -->
+        <div id="game-start-overlay" style="display: flex; align-items: center; justify-content: center;">
+          
+          <!-- 1. メインのタイトルメニュー -->
+          <div class="overlay-content" id="title-menu-main" style="width: 320px; transition: all 0.3s ease;">
+            <h1 class="start-logo" style="font-size: 32px; line-height: 1.25; margin-bottom: 15px; letter-spacing: 2px;"><span class="logo-accent">TYPING</span><br>COLOSSEUM</h1>
+            <p id="start-message" style="margin-bottom: 25px; color: #8a8a9d; font-size: 11px; letter-spacing: 0.5px; line-height: 1.4;">キーボードを【半角英数 (IME OFF)】にして<br>開始してください</p>
+            <div class="title-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 220px; margin: 0 auto;">
+              <button id="menu-new-game" class="neon-btn-green" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">NEW GAME</button>
+              <button id="menu-load-game" class="neon-btn-purple" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">LOAD GAME</button>
+              <button id="menu-options" class="neon-btn-blue" style="font-size: 13px; padding: 10px 0; width: 100%; letter-spacing: 1px; font-weight: bold;">OPTIONS</button>
+            </div>
+          </div>
+
+          <!-- 2. NEW GAME スロット選択パネル -->
+          <div class="overlay-content hidden" id="title-menu-new-slots" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green-glow); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">NEW GAME</h2>
+            <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">開始するスロットを選択してください。<br><span style="color: #ff3366;">※既存のデータは上書きされます</span></p>
+            <div class="slot-buttons" style="display: flex; flex-direction: column; gap: 8px; width: 240px; margin: 0 auto 18px;">
+              <button class="new-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1</button>
+              <button class="new-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2</button>
+              <button class="new-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3</button>
+            </div>
+            <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
+
+          <!-- 3. LOAD GAME スロット選択パネル -->
+          <div class="overlay-content hidden" id="title-menu-load-slots" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple-glow); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">LOAD GAME</h2>
+            <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">ロードするスロットを選択してください。</p>
+            <div class="slot-buttons" style="display: flex; flex-direction: column; gap: 8px; width: 240px; margin: 0 auto 18px;">
+              <button class="load-slot-btn neon-btn" data-slot="1" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 1</button>
+              <button class="load-slot-btn neon-btn" data-slot="2" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 2</button>
+              <button class="load-slot-btn neon-btn" data-slot="3" style="font-size: 11px; padding: 9px 0; width: 100%; text-align: center;">スロット 3</button>
+            </div>
+            <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
+
+          <!-- 4. OPTIONS パネル -->
+          <div class="overlay-content hidden" id="title-menu-options" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 255, 234, 0.4); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">OPTIONS</h2>
+            
+            <div class="options-group" style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-bottom: 18px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+              <div>
+                <label style="font-size: 10px; color: #8a8a9d; display: block; margin-bottom: 4px; letter-spacing: 0.5px;">DEFAULT STAGE</label>
+                <select id="option-stage" class="custom-select" style="width: 100%; height: 32px; font-size: 11px; background: rgba(0,0,0,0.5);">
+                  <option value="japan">未来編・日本 (渋谷 - Easy)</option>
+                  <option value="dubai">未来編・ドバイ (Dubai - Normal)</option>
+                  <option value="moon">未来編・月 (The Moon - Hard)</option>
+                </select>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer;">
+                <input type="checkbox" id="option-disable-enemies" style="cursor: pointer; width: 14px; height: 14px;">
+                <label for="option-disable-enemies" style="font-size: 11px; color: #d1d1e0; cursor: pointer; user-select: none;">敵の出現を停止する (デバッグ用)</label>
+              </div>
+            </div>
+            
+            <button class="back-to-main-btn neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
+
+          <!-- 5. STAGE SELECT パネル (スロット選択後に表示される) -->
+          <div class="overlay-content hidden" id="title-menu-stage-select" style="width: 320px; transition: all 0.3s ease;">
+            <h2 style="font-size: 18px; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 255, 234, 0.4); margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;">STAGE SELECT</h2>
+            <p style="color: #8a8a9d; font-size: 11px; margin-bottom: 18px; line-height: 1.4;">挑戦するステージを選択してください。</p>
+            <div class="stage-select-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 240px; margin: 0 auto 18px;">
+              <button class="stage-btn neon-btn-green" data-stage="japan" style="font-size: 12px; padding: 10px 0; width: 100%; font-weight: bold; letter-spacing: 0.5px;">未来編・日本 (渋谷 - Easy)</button>
+              <button class="stage-btn neon-btn-purple" data-stage="dubai" style="font-size: 12px; padding: 10px 0; width: 100%; font-weight: bold; letter-spacing: 0.5px;">未来編・ドバイ (Normal)</button>
+              <button class="stage-btn neon-btn-pink" data-stage="moon" style="font-size: 12px; padding: 10px 0; width: 100%; font-weight: bold; letter-spacing: 0.5px;">未来編・月 (The Moon - Hard)</button>
+            </div>
+            <button id="back-to-slots-btn" class="neon-btn" style="font-size: 10px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); color: #fff;">戻る</button>
+          </div>
+          
         </div>
       </div>
 
       <!-- 右側コントロールパネル (Glassmorphism) -->
-      <aside class="control-panel">
+      <aside class="control-panel hidden">
         
         <!-- ステージ選択 -->
-        <section class="panel-section">
+        <section class="panel-section" style="display: none;">
           <h3 class="section-title">STAGE SELECT</h3>
           <div class="equip-grid">
             <div class="equip-slot">
@@ -71,7 +202,7 @@
         </section>
         
         <!-- デバッグ設定 -->
-        <section class="panel-section">
+        <section class="panel-section" style="display: none;">
           <h3 class="section-title">DEBUG OPTIONS</h3>
           <div class="equip-grid">
             <div class="equip-slot" style="flex-direction: row; align-items: center; gap: 8px; cursor: pointer;">
@@ -88,19 +219,19 @@
             <div class="equip-slot">
               <label for="select-weapon">WEAPON</label>
               <select id="select-weapon" class="custom-select">
-                <option value="none">無し</option>
-                <option value="claymore_keyboard">クレイモア・キーボード (+15% Dmg, +5% Crit)</option>
-                <option value="laser_stylus">レーザー・スタイラス (射程+12%)</option>
-                <option value="nanobanana_staff">ナノバナナスタッフ (SP獲得+25%)</option>
+                <option value="none">無し (初期)</option>
+                <option value="claymore_keyboard">クレイモア・キーボード (Lv.3) (+15% Dmg, +5% Crit)</option>
+                <option value="laser_stylus">レーザー・スタイラス (Lv.7) (射程+12%)</option>
+                <option value="nanobanana_staff">ナノバナナスタッフ (Lv.12) (SP獲得+25%)</option>
               </select>
             </div>
             <div class="equip-slot">
               <label for="select-armor">ARMOR</label>
               <select id="select-armor" class="custom-select">
-                <option value="none">無し</option>
-                <option value="aluminum_chassis">アルミニウム・シャーシ (基地HP+20%, 被Dmg-8%)</option>
-                <option value="buffer_shield">バッファー・シールド (ミス防止 3回)</option>
-                <option value="central_protector">セントラル・プロテクター (被Dmg-15%, ノックバック無効)</option>
+                <option value="none">無し (初期)</option>
+                <option value="aluminum_chassis">アルミニウム・シャーシ (Lv.5) (基地HP+20%, 被Dmg-8%)</option>
+                <option value="buffer_shield">バッファー・シールド (Lv.10) (ミス防止 3回)</option>
+                <option value="central_protector">セントラル・プロテクター (Lv.15) (被Dmg-15%, ノックバック無効)</option>
               </select>
             </div>
           </div>
@@ -162,57 +293,35 @@
           </div>
         </section>
         
-        <!-- セーブ/ロード -->
-        <section class="panel-section save-load-section">
-          <button id="save-btn" class="neon-btn-green">SAVE STATE</button>
-          <button id="load-btn" class="neon-btn-purple">LOAD STATE</button>
+        <!-- セーブ/ロード (3スロット) -->
+        <section class="panel-section save-load-section" style="padding: 12px 15px; display: none;">
+          <h3 style="margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8a8a9d;">Save Slots</h3>
+          <div class="slot-row" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+            <select id="select-save-slot" class="custom-select" style="width: 100%; font-size: 12px; height: 32px; background: rgba(0,0,0,0.4);">
+              <option value="1">スロット 1</option>
+              <option value="2">スロット 2</option>
+              <option value="3">スロット 3</option>
+            </select>
+            <div id="slot-meta-info" style="font-size: 11px; color: #00ffea; background: rgba(255,255,255,0.02); padding: 5px 8px; border-radius: 4px; border: 1px dashed rgba(255,255,255,0.1); min-height: 18px;">
+              データがありません
+            </div>
+          </div>
+          <div class="save-load-actions" style="display: flex; gap: 5px;">
+            <button id="save-btn" class="neon-btn-green" style="flex: 1; height: 30px; font-size: 11px; padding: 0;">SAVE</button>
+            <button id="load-btn" class="neon-btn-purple" style="flex: 1; height: 30px; font-size: 11px; padding: 0;">LOAD</button>
+            <button id="delete-btn" class="neon-btn" style="flex: 1; height: 30px; font-size: 11px; padding: 0; background: rgba(255,30,80,0.15); border-color: rgba(255,30,80,0.5); color: #ff3366; text-shadow: 0 0 5px rgba(255,30,80,0.4);">DELETE</button>
+          </div>
         </section>
 
       </aside>
     </div>
 
-    <!-- タイピングインターフェースオーバーレイ -->
-    <div id="typing-input-overlay">
-      <div class="typing-container">
-        
-        <!-- タイピング指示ワード表示 -->
-        <div class="word-display-box">
-          <div class="next-monster-badge" id="summon-badge">NEXT: キモバナナネコ</div>
-          <div class="word-display" id="word-target">
-            <span class="japanese-word">クリックして開始</span>
-          </div>
-          <div class="word-roman" id="word-roman">
-            <span class="untyped">click-here-to-start</span>
-          </div>
-        </div>
 
-        <input type="text" id="game-word-input" autocomplete="off" autofocus placeholder="ここをクリックしてタイピングを開始してください" />
-        
-        <!-- タイピングガイドメッセージ -->
-        <div class="typing-guide-msg" style="font-size: 11px; color: #8a8a9d; margin-top: -6px; margin-bottom: 6px; letter-spacing: 1px;">
-          ※キーボードを【半角英数 (IME OFF)】にして入力してください
-        </div>
-
-        <!-- コンボ & SP 情報 -->
-        <div class="typing-stats">
-          <div class="combo-box">
-            <span class="stat-lbl">COMBO</span>
-            <span id="combo-val" class="stat-num text-pulse">0</span>
-          </div>
-          <div class="sp-box">
-            <span class="stat-lbl">SPECIAL GAUGE</span>
-            <div class="sp-bar-container">
-              <div id="sp-bar-fill" class="sp-bar-fill"></div>
-              <span id="sp-val" class="sp-text">0%</span>
-            </div>
-            <button id="special-btn" class="special-btn disabled" disabled>ULTIMATE (SPACE)</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
 
   </div>
+
+  <!-- レベルアップ時のアンロック通知用トーストコンテナ -->
+  <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
 
   <!-- メインゲームスクリプト -->
 </body>
